@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+    <title>BFC Ripper</title>
+    <script src="tracks.js"></script>
+  </head>
+  <body>
+    <input type="text" placeholder="album artist">
+    <input type="text" placeholder="album title">
+    <input type="number" placeholder="release year">
+    <input type="text" placeholder="enre">
+
+    <table>
+      <thead>
+        <th>#</th>
+        <th>Artist</th>
+        <th>Title</th>
+        <th>Length</th>
+        <th>Start</th>
+      </thead>
+      <tbody id="tbody">
+      </tbody>
+    </table>
+
+    <button id="rip">Rip it!</button>
+
+    <script>
+      void async function main(){
+        const tocInfo = await Tracks.getInfo()
+        tocInfo.forEach(showTrack)
+
+        document.getElementById('rip').addEventListener('click', rip)
+      }()
+
+      function rip(){
+
+      }
+
+      function showTrack(info){
+        const tmpl = `
+          <td>${info.tn}</td>
+          <td><input type="text" placeholder="track artist"></td>
+          <td><input type="text" placeholder="track title"></td>
+          <td>${info.length}</td>
+          <td>${info.start}</td>
+        `
+        const row = document.createElement('tr')
+        row.innerHTML = tmpl
+        document.getElementById('tbody').appendChild(row)
+
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "bfc-ripper",
+  "version": "0.1.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bleuarff",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^6.0.10"
+  }
+}
