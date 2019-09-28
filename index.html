@@ -2,55 +2,40 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval';" />
     <title>BFC Ripper</title>
-    <script src="tracks.js"></script>
+    <script src='lib/vue.js'></script>
   </head>
   <body>
-    <input type="text" placeholder="album artist">
-    <input type="text" placeholder="album title">
-    <input type="number" placeholder="release year">
-    <input type="text" placeholder="enre">
+    <div id="app">
+        <input type="text" placeholder="Album Artist" v-model="albumArtist">
+        <input type="text" placeholder="Album Title" v-model="albumTitle">
+        <input type="number" placeholder="Release Year" v-model="releaseYear">
+        <input type="text" placeholder="Genre" v-model="genre">
 
-    <table>
-      <thead>
-        <th>#</th>
-        <th>Artist</th>
-        <th>Title</th>
-        <th>Length</th>
-        <th>Start</th>
-      </thead>
-      <tbody id="tbody">
-      </tbody>
-    </table>
+        <table>
+          <thead>
+            <th></th>
+            <th>#</th>
+            <th>Artist</th>
+            <th>Title</th>
+            <th>Length</th>
+            <th>Start</th>
+          </thead>
+          <tbody id="tbody">
+            <tr v-for="tk in tracks">
+              <td><input type="checkbox" checked></td>
+              <td>{{tk.tn}}</td>
+              <td><input type="text" placeholder="track artist" v-model="tk.artist"></td>
+              <td><input type="text" placeholder="track title" v-model="tk.title"></td>
+              <td>{{tk.length}}</td>
+              <td>{{tk.start}}</td>
+            </tr>
+          </tbody>
+        </table>
 
-    <button id="rip">Rip it!</button>
-
-    <script>
-      void async function main(){
-        const tocInfo = await Tracks.getInfo()
-        tocInfo.forEach(showTrack)
-
-        document.getElementById('rip').addEventListener('click', rip)
-      }()
-
-      function rip(){
-
-      }
-
-      function showTrack(info){
-        const tmpl = `
-          <td>${info.tn}</td>
-          <td><input type="text" placeholder="track artist"></td>
-          <td><input type="text" placeholder="track title"></td>
-          <td>${info.length}</td>
-          <td>${info.start}</td>
-        `
-        const row = document.createElement('tr')
-        row.innerHTML = tmpl
-        document.getElementById('tbody').appendChild(row)
-
-      }
-    </script>
+        <button id="rip">Rip it!</button>
+    </div>
+    <script src="src/app.js"></script>
   </body>
 </html>
