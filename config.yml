@@ -1,0 +1,7 @@
+
+FLAC:
+  # FLAC files base directory. Must be absolute path.
+  # directory: /mnt/zik/FLAC
+  directory: /media/bleuarff/DIVERS/bfc/FLAC
+
+# flac: flac --picture="3||||{pathtopicture}"  --output-filename="{output path}" -3

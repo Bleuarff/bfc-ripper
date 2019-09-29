@@ -1,5 +1,9 @@
 'use strict'
 
+const fsp = require('fs').promises,
+      { spawn } = require('child_process'),
+      path = require('path')
+
 const app = new Vue({
   el: '#app',
   data: {
@@ -9,17 +13,35 @@ const app = new Vue({
     genre: '',
     tracks: [],
     ripping: false,
-    output: '',
 
-    childProc: null,
+    cdparanoiaProc: null,
+    config: null,
   },
-  mounted: function(){
+  mounted: async function(){
     this.start()
+
+    try{
+      const { safeLoad } = require('js-yaml')
+
+      const conf = await fsp.readFile('./config.yml', 'utf8')
+      this.config = safeLoad(conf)
+    }
+    catch(ex){
+      alert('Error loading config file.')
+    }
   },
   watch: {
     albumArtist: function(val){
       // when album artist is edited, all tracks inherit it
       this.tracks.forEach(x => {x.artist = val})
+    }
+  },
+  computed: {
+    folderName: function(){
+      return `${this.albumArtist} - ${this.albumTitle} (${this.releaseYear})`
+    },
+    flacOutputDir: function(){
+      return path.resolve(this.config.FLAC.directory, this.folderName)
     }
   },
   methods: {
@@ -29,23 +51,44 @@ const app = new Vue({
     },
 
     rip: async function(test = false){
-      this.ripping = true
-      this.output = ''
-      const { spawn } = require('child_process'),
-            { mkdir } = require('fs').promises,
-            tmp = require('os').tmpdir() + '/bfcripper-' + Date.now()
+      try{
+        this.validate()
+      }
+      catch(ex){
+        console.error(ex)
+        alert(ex.message)
+        return
+      }
 
-      await mkdir(tmp)
-      const options = [
+      /* SETUP */
+      this.tracks.forEach(t => {
+        t.albumTitle = this.albumTitle
+        t.year = this.releaseYear
+        t.trackCount = this.tracks.length
+        t.genre = this.genre
+      })
+
+      this.tmpdir = require('os').tmpdir() + '/bfcripper-' + Date.now()
+      const args = [ // cdparanoia arguments
         '--output-wav',
         '--verbose',
-        test ? '1': '--batch'
+        test ? '1': '--batch' // test mode: rip first track only
       ]
+
+      // create temp dir for wav & flac output dir
+      const ps = await Promise.all([
+        fsp.mkdir(this.tmpdir),
+        Utils.mkdirp(this.flacOutputDir)
+      ])
+
+      /* Start ripping process */
+
+      this.ripping = true
       const start = Date.now()
-      this.childProc = spawn('cdparanoia', options, {cwd: tmp})
+      this.cdparanoiaProc = spawn('cdparanoia', args, {cwd: this.tmpdir})
 
       // cdparanoia outputs everything on stderr, no need to listen to stdout
-      this.childProc.stderr.on('data', (data) => {
+      this.cdparanoiaProc.stderr.on('data', (data) => {
         this.$refs['log-paranoia'].push(data)
 
         let track
@@ -64,16 +107,57 @@ const app = new Vue({
           this.encodeFLAC(track)
       })
 
-      this.childProc.on('close', (code) => {
+      this.cdparanoiaProc.on('close', (code) => {
         this.ripping = false
-        this.$refs['log-paranoia'].push(`child process exited with code ${code}`)
+        this.$refs['log-paranoia'].push(`cdparanoia exited with code ${code}`)
         this.$refs['log-paranoia'].push(`\nRip time: ${this.parseTime(Date.now() - start)}`)
       })
     },
 
+    // checks metadata are there
+    validate: function(){
+      if (this.tracks.some(x => !x.artist))
+        throw new Error('Missing artist name')
+      else if (this.tracks.some(x => !x.title))
+        throw new Error('Missing track title')
+      else if (!this.releaseYear)
+        throw new Error('Missing release year')
+    },
+
     encodeFLAC: function(track){
+      if (!track) throw new Error('Track object is null')
+
       console.log('Encode to FLAC')
-      console.log(track)
+      // console.log(track)
+      const inputFile = path.resolve(this.tmpdir, track.sourcename),
+            outputFile = path.resolve(this.flacOutputDir, `${track.filename}.flac`),
+            args = [
+              ` "${inputFile}"`,
+              '-3',
+              '-f',
+              `-T ARTIST="${track.artist}"`,
+              `-T TITLE="${track.title}"`,
+              `-T ALBUM="${track.albumTitle}"`,
+              `-T TRACKNUMBER="${track.pos}"`,
+              `-T DATE="${track.year}"`,
+              `-T GENRE="${this.genre}"`,
+              `-o "${outputFile}"`,
+            ]
+
+      console.log('flac ' + args.join(' '))
+
+      this.flacProc = spawn('flac', args, {cwd: this.tmpdir})
+      this.flacProc.stdout.on('data', data => {
+        console.log('stdout: ' + data)
+      })
+      this.flacProc.stderr.on('data', data => {
+        console.log('stderr: ' + data)
+      })
+      this.flacProc.on('close', (code) => {
+        // this.ripping = false
+        console.log(`flac exited with code ${code}.`)
+      })
+
     },
 
     // converts a duration in ms into a string with minutes and seconds
@@ -86,15 +170,16 @@ const app = new Vue({
 
     // cancel rip. kill child proc.
     cancel: function(){
-      this.childProc.kill('SIGTERM')
+      this.cdparanoiaProc.kill('SIGTERM')
     },
 
-    clear: function(path){
-      if (!path) return
+    // delete temp (wav) folder
+    clear: function(){
+      if (!this.tmpdir) return
 
       const rimraf = require('rimraf')
-      rimraf(path, err => {
-        if (err) console.error(`Error deleting temp folder ${path}`)
+      rimraf(this.tmpdir, err => {
+        if (err) console.error(`Error deleting temp folder ${this.tmpdir}`)
       })
     },
 
@@ -109,18 +194,27 @@ const app = new Vue({
 
           let match
           while(match = rx.exec(stderr)){
-            tracks.push({
+            tracks.push(new Track({
               id: parseInt(match.groups.tn, 10),
               start: match.groups.start,
-              length: match.groups.length,
-              artist: '',
-              title: '',
-              enabled: true
-            })
+              length: match.groups.length
+            }))
           }
           resolve(tracks)
         })
       })
+    },
+
+    testEncodeFlac: function(){
+      const target = this.tracks[0]
+      this.tmpdir = "/tmp/bfcripper-1569790390611"
+      target.artist = 'Ufomammut'
+      target.albumTitle = '8'
+      target.genre = 'Doom'
+      target.year = '2017'
+      target.trackCount = this.tracks.length
+
+      this.encodeFLAC(target)
     }
   }
 })
