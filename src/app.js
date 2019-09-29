@@ -36,22 +36,52 @@ const app = new Vue({
             tmp = require('os').tmpdir() + '/bfcripper-' + Date.now()
 
       await mkdir(tmp)
-      this.childProc = spawn('cdparanoia', [test ? '1': '--batch', '--verbose'], {cwd: tmp});
+      const options = [
+        '--output-wav',
+        '--verbose',
+        test ? '1': '--batch'
+      ]
+      const start = Date.now()
+      this.childProc = spawn('cdparanoia', options, {cwd: tmp})
 
-      this.childProc.stdout.on('data', (data) => {
-        this.$refs['log-paranoia'].push(data)
-      })
-
+      // cdparanoia outputs everything on stderr, no need to listen to stdout
       this.childProc.stderr.on('data', (data) => {
-        // this.output += '\n' + data
         this.$refs['log-paranoia'].push(data)
+
+        let track
+        // detect a track is done when cdparanoia announces it starts a new track.
+        const match = /outputting to track(?<tn>\d+)/.exec(data)
+        if (match){
+          const tn = parseInt(match.groups.tn, 10) - 1 // get previous track number
+          if (tn > 0)
+            track = this.tracks.find(x => x.id === tn)
+        }
+        else if (data.indexOf('Done.') > -1){
+          track = this.tracks[this.tracks.length - 1]
+        }
+
+        if (track)
+          this.encodeFLAC(track)
       })
 
       this.childProc.on('close', (code) => {
         this.ripping = false
         this.$refs['log-paranoia'].push(`child process exited with code ${code}`)
+        this.$refs['log-paranoia'].push(`\nRip time: ${this.parseTime(Date.now() - start)}`)
       })
+    },
 
+    encodeFLAC: function(track){
+      console.log('Encode to FLAC')
+      console.log(track)
+    },
+
+    // converts a duration in ms into a string with minutes and seconds
+    parseTime: function(val){
+      val /= 1000 // convert to seconds
+      const min = Math.floor(val / 60),
+            sec = Math.floor(val - min*60).toString().padStart(2, '0')
+      return `${min}m ${sec}s`
     },
 
     // cancel rip. kill child proc.
@@ -61,7 +91,7 @@ const app = new Vue({
 
     clear: function(path){
       if (!path) return
-    
+
       const rimraf = require('rimraf')
       rimraf(path, err => {
         if (err) console.error(`Error deleting temp folder ${path}`)
