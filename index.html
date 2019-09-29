@@ -5,9 +5,11 @@
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval';" />
     <title>BFC Ripper</title>
     <script src='lib/vue.js'></script>
+    <script src='src/bfc-log.js'></script>
   </head>
   <body>
     <div id="app">
+      <div>
         <input type="text" placeholder="Album Artist" v-model="albumArtist">
         <input type="text" placeholder="Album Title" v-model="albumTitle">
         <input type="number" placeholder="Release Year" v-model="releaseYear">
@@ -15,7 +17,6 @@
 
         <table>
           <thead>
-            <th></th>
             <th>#</th>
             <th>Artist</th>
             <th>Title</th>
@@ -24,8 +25,7 @@
           </thead>
           <tbody id="tbody">
             <tr v-for="tk in tracks">
-              <td><input type="checkbox" checked></td>
-              <td>{{tk.tn}}</td>
+              <td>{{tk.id}}</td>
               <td><input type="text" placeholder="track artist" v-model="tk.artist"></td>
               <td><input type="text" placeholder="track title" v-model="tk.title"></td>
               <td>{{tk.length}}</td>
@@ -34,7 +34,13 @@
           </tbody>
         </table>
 
-        <button id="rip">Rip it!</button>
+        <button id="rip" v-on:click="rip(true)" :disabled="ripping">Rip it!</button>
+
+        <button id="cancel" v-on:click="cancel" v-show="ripping">Cancel</button>
+      </div>
+
+      <bfc-log id="log-paranoia" ref="log-paranoia">
+      </bfc-log>
     </div>
     <script src="src/app.js"></script>
   </body>

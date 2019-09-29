@@ -11,5 +11,8 @@
   "license": "MIT",
   "devDependencies": {
     "electron": "^6.0.10"
+  },
+  "dependencies": {
+    "rimraf": "^3.0.0"
   }
 }
