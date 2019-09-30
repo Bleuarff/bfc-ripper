@@ -17,6 +17,9 @@ function createWindow () {
 
   // and load the index.html of the app.
   win.loadFile('index.html')
+  win.webContents.on('did-finish-load', () => {
+    win.webContents.send('userData', app.getPath('userData'))
+  })
 
   // Open the DevTools.
   win.webContents.openDevTools()

@@ -1,8 +1,10 @@
 'use strict'
 
 const fsp = require('fs').promises,
-      { spawn } = require('child_process'),
+      { spawn, exec } = require('child_process'),
       path = require('path')
+
+
 
 const app = new Vue({
   el: '#app',
@@ -16,6 +18,7 @@ const app = new Vue({
 
     cdparanoiaProc: null,
     config: null,
+    tmpdir: '',
   },
   mounted: async function(){
     this.start()
@@ -68,7 +71,6 @@ const app = new Vue({
         t.genre = this.genre
       })
 
-      this.tmpdir = require('os').tmpdir() + '/bfcripper-' + Date.now()
       const args = [ // cdparanoia arguments
         '--output-wav',
         '--verbose',
@@ -110,7 +112,7 @@ const app = new Vue({
       this.cdparanoiaProc.on('close', (code) => {
         this.ripping = false
         this.$refs['log-paranoia'].push(`cdparanoia exited with code ${code}`)
-        this.$refs['log-paranoia'].push(`\nRip time: ${this.parseTime(Date.now() - start)}`)
+        this.$refs['log-paranoia'].push(`\nRip time: ${Utils.parseTime(Date.now() - start)}`)
       })
     },
 
@@ -127,45 +129,22 @@ const app = new Vue({
     encodeFLAC: function(track){
       if (!track) throw new Error('Track object is null')
 
-      console.log('Encode to FLAC')
-      // console.log(track)
       const inputFile = path.resolve(this.tmpdir, track.sourcename),
-            outputFile = path.resolve(this.flacOutputDir, `${track.filename}.flac`),
-            args = [
-              ` "${inputFile}"`,
-              '-3',
-              '-f',
-              `-T ARTIST="${track.artist}"`,
-              `-T TITLE="${track.title}"`,
-              `-T ALBUM="${track.albumTitle}"`,
-              `-T TRACKNUMBER="${track.pos}"`,
-              `-T DATE="${track.year}"`,
-              `-T GENRE="${this.genre}"`,
-              `-o "${outputFile}"`,
-            ]
+            outputFile = path.resolve(this.flacOutputDir, `${track.filename}.flac`)
 
-      console.log('flac ' + args.join(' '))
+      const cmd = `flac -3f -T ARTIST="${track.artist}" -T TITLE="${track.title}" -T ALBUM="${track.albumTitle}" -T TRACKNUMBER="${track.pos}" -T DATE="${track.year}" -T GENRE="${this.genre}" -o "${outputFile}" "${inputFile}"`
+      console.log(cmd)
 
-      this.flacProc = spawn('flac', args, {cwd: this.tmpdir})
+      this.flacProc = spawn(cmd, [], {shell: true})
       this.flacProc.stdout.on('data', data => {
-        console.log('stdout: ' + data)
+        this.$refs['log-flac'].push(data)
       })
       this.flacProc.stderr.on('data', data => {
-        console.log('stderr: ' + data)
+        this.$refs['log-flac'].push(data)
       })
       this.flacProc.on('close', (code) => {
-        // this.ripping = false
-        console.log(`flac exited with code ${code}.`)
+        this.$refs['log-flac'].push(`flac exited with code ${code}.`)
       })
-
-    },
-
-    // converts a duration in ms into a string with minutes and seconds
-    parseTime: function(val){
-      val /= 1000 // convert to seconds
-      const min = Math.floor(val / 60),
-            sec = Math.floor(val - min*60).toString().padStart(2, '0')
-      return `${min}m ${sec}s`
     },
 
     // cancel rip. kill child proc.
@@ -185,7 +164,6 @@ const app = new Vue({
 
     // returns an array of tracks with basic info
     getTOC: function(){
-      const {exec} = require('child_process')
       return new Promise((resolve, reject) => {
         exec('cdparanoia -Q', (err, stdout, stderr) => {
           const tracks = []
@@ -205,16 +183,21 @@ const app = new Vue({
       })
     },
 
-    testEncodeFlac: function(){
+    /*testEncodeFlac: function(){
       const target = this.tracks[0]
-      this.tmpdir = "/tmp/bfcripper-1569790390611"
-      target.artist = 'Ufomammut'
-      target.albumTitle = '8'
-      target.genre = 'Doom'
-      target.year = '2017'
+      this.tmpdir = '/home/bleuarff/.config/bfc-ripper/1569871111900'
+      this.albumArtist = target.artist = 'Ufomammut'
+      this.albumTitle = target.albumTitle = '8'
+      this.genre = target.genre = 'Doom'
+      this.releaseYear = target.year = '2017'
       target.trackCount = this.tracks.length
 
       this.encodeFLAC(target)
-    }
+    }*/
   }
+})
+
+// build temp folder for wav files from userData path
+require('electron').ipcRenderer.on('userData', (event, message) => {
+  app.tmpdir = path.resolve(message, 'rip-' + Date.now().toString())
 })
