@@ -134,7 +134,19 @@ const app = new Vue({
       const inputFile = path.resolve(this.tmpdir, track.sourcename),
             outputFile = path.resolve(this.flacOutputDir, `${track.filename}.flac`)
 
-      const cmd = `flac -3f -T ARTIST="${track.artist}" -T TITLE="${track.title}" -T ALBUM="${track.albumTitle}" -T TRACKNUMBER="${track.pos}" -T DATE="${track.year}" -T GENRE="${this.genre}" --picture="${this.imagePath}"  -o "${outputFile}" "${inputFile}"`
+      const cmd = [
+        'flac',
+        '-3f', // TODO: remove f option when done testing 
+        `-T ARTIST="${track.artist}"`,
+        `-T TITLE="${track.title}"`,
+        `-T ALBUM="${track.albumTitle}"`,
+        `-T TRACKNUMBER="${track.pos}"`,
+        `-T DATE="${track.year}"`,
+        `-T GENRE="${this.genre}"`,
+        `--picture="${this.imagePath}"`,
+        `-o "${outputFile}"`,
+        `"${inputFile}"`
+      ].join(' ')
       console.log(cmd)
 
       this.flacProc = spawn(cmd, [], {shell: true})
