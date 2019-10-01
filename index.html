@@ -13,13 +13,28 @@
   <body>
     <div id="app">
       <div id="metadata">
-        <input type="text" placeholder="Album Artist" v-model="albumArtist">
-        <input type="text" placeholder="Album Title" v-model="albumTitle">
-        <input type="number" placeholder="Release Year" v-model="releaseYear">
-        <input type="text" placeholder="Genre" v-model="genre">
-        <!-- TODO: add cd number/total, default 1/1 -->
+        <div id="cdinfo">
+          <div>
+            <label>Artist</label><input type="text" placeholder="Album Artist" v-model="albumArtist" class="wide">
+          </div>
+          <div>
+            <label>Album</label><input type="text" placeholder="Album Title" v-model="albumTitle" class="wide">
+          </div>
+          <div>
+            <label>Year</label><input type="number" placeholder="Release Year" v-model="releaseYear">
+            <label>Genre</label><input type="text" placeholder="Genre" v-model="genre">
+            <label>CD #</label><input type="text" value="01">/<input type="text" value="01">
+          </div>
 
-        <table>
+        </div>
+        <div id="image-ctnr">
+          <input id="fileInput" type="file" accept="image/jpeg, image/png" v-on:change="selectImage"/>
+          <div class="img">
+            <img :src="imageUrl">
+          </div>
+        </div>
+
+        <table id="tracks">
           <thead>
             <th>#</th>
             <th>Artist</th>
@@ -47,6 +62,7 @@
       <div id="logs">
         <bfc-log id="log-paranoia" ref="log-paranoia"></bfc-log>
         <bfc-log id="log-flac" ref="log-flac"></bfc-log>
+        <bfc-log id="log-lame" ref="log-lame"></bfc-log>
       </div>
     </div>
     <script src="src/app.js"></script>

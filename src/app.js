@@ -14,6 +14,8 @@ const app = new Vue({
     releaseYear: '',
     genre: '',
     tracks: [],
+    imagePath: '', // cover image filepath
+    imageUrl: '', // data url
     ripping: false,
 
     cdparanoiaProc: null,
@@ -45,7 +47,7 @@ const app = new Vue({
     },
     flacOutputDir: function(){
       return path.resolve(this.config.FLAC.directory, this.folderName)
-    }
+    },
   },
   methods: {
     // start: refresh TOC
@@ -132,7 +134,7 @@ const app = new Vue({
       const inputFile = path.resolve(this.tmpdir, track.sourcename),
             outputFile = path.resolve(this.flacOutputDir, `${track.filename}.flac`)
 
-      const cmd = `flac -3f -T ARTIST="${track.artist}" -T TITLE="${track.title}" -T ALBUM="${track.albumTitle}" -T TRACKNUMBER="${track.pos}" -T DATE="${track.year}" -T GENRE="${this.genre}" -o "${outputFile}" "${inputFile}"`
+      const cmd = `flac -3f -T ARTIST="${track.artist}" -T TITLE="${track.title}" -T ALBUM="${track.albumTitle}" -T TRACKNUMBER="${track.pos}" -T DATE="${track.year}" -T GENRE="${this.genre}" --picture="${this.imagePath}"  -o "${outputFile}" "${inputFile}"`
       console.log(cmd)
 
       this.flacProc = spawn(cmd, [], {shell: true})
@@ -194,6 +196,15 @@ const app = new Vue({
 
       this.encodeFLAC(target)
     }*/
+
+    selectImage: function(e){
+      if (!e.currentTarget.files.length)
+        return
+
+      const file = e.currentTarget.files[0]
+      this.imagePath = file.path
+      this.imageUrl = URL.createObjectURL(file)
+    }
   }
 })
 
