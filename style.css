@@ -1,0 +1,32 @@
+body{
+  margin: 0;
+  height: 100vh;
+  padding: 8px;
+}
+
+#app{
+  height: 100%;
+}
+
+#metadata{
+  margin-bottom: 2em;
+}
+
+h2{
+  margin: 0;
+}
+
+#logs{
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: stretch;
+  height: 50%;
+}
+
+.bfc-log{
+  width: 30%;
+  min-width: 470px;
+  font-size: .9em;
+  margin-right: 1em;
+}

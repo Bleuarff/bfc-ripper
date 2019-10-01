@@ -8,17 +8,14 @@ Vue.component('bfc-log', {
   },
   updated: async function(){
     await this.$nextTick()
-    const nd = this.$el.getElementsByClassName('log')[0]
-    nd.scrollTop = nd.scrollHeight
+    this.$el.scrollTop = this.$el.scrollHeight
   },
   methods: {
     push: function(data){
-      this.content += data      
+      this.content += data
     }
   },
   template: `
-  <div class="bfc-log">
-    <textarea readonly class="log">{{content}}</textarea>
-  </div>
+    <textarea readonly class="bfc-log log">{{content}}</textarea>
   `
 })

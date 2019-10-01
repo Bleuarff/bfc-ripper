@@ -8,10 +8,11 @@
     <script src='src/utils.js'></script>
     <script src='src/track.js'></script>
     <script src='src/bfc-log.js'></script>
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
     <div id="app">
-      <div>
+      <div id="metadata">
         <input type="text" placeholder="Album Artist" v-model="albumArtist">
         <input type="text" placeholder="Album Title" v-model="albumTitle">
         <input type="number" placeholder="Release Year" v-model="releaseYear">
@@ -42,10 +43,11 @@
         <button id="cancel" v-on:click="cancel" v-show="ripping">Cancel</button>
       </div>
 
-      <bfc-log id="log-paranoia" ref="log-paranoia">
-      </bfc-log>
-      <bfc-log id="log-flac" ref="log-flac">
-      </bfc-log>
+      <h2>Logs</h2>
+      <div id="logs">
+        <bfc-log id="log-paranoia" ref="log-paranoia"></bfc-log>
+        <bfc-log id="log-flac" ref="log-flac"></bfc-log>
+      </div>
     </div>
     <script src="src/app.js"></script>
   </body>
