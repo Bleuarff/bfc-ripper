@@ -16,6 +16,7 @@ const app = new Vue({
     tracks: [],
     imagePath: '', // cover image filepath
     imageUrl: '', // data url
+    cdNumber: '1',
     ripping: false,
 
     cdparanoiaProc: null,
@@ -48,6 +49,9 @@ const app = new Vue({
     flacOutputDir: function(){
       return path.resolve(this.config.FLAC.directory, this.folderName)
     },
+    mp3OutputDir: function(){
+      return path.resolve(this.config.MP3.directory, this.folderName)
+    }
   },
   methods: {
     // start: refresh TOC
@@ -82,7 +86,8 @@ const app = new Vue({
       // create temp dir for wav & flac output dir
       const ps = await Promise.all([
         fsp.mkdir(this.tmpdir),
-        Utils.mkdirp(this.flacOutputDir)
+        Utils.mkdirp(this.flacOutputDir),
+        Utils.mkdirp(this.mp3OutputDir),
       ])
 
       /* Start ripping process */
@@ -136,13 +141,14 @@ const app = new Vue({
 
       const cmd = [
         'flac',
-        '-3f', // TODO: remove f option when done testing 
+        '-3f', // TODO: remove f option when done testing
         `-T ARTIST="${track.artist}"`,
         `-T TITLE="${track.title}"`,
         `-T ALBUM="${track.albumTitle}"`,
         `-T TRACKNUMBER="${track.pos}"`,
         `-T DATE="${track.year}"`,
         `-T GENRE="${this.genre}"`,
+        `-T DISCNUMBER="${this.cdNumber}"`,
         `--picture="${this.imagePath}"`,
         `-o "${outputFile}"`,
         `"${inputFile}"`
@@ -158,6 +164,43 @@ const app = new Vue({
       })
       this.flacProc.on('close', (code) => {
         this.$refs['log-flac'].push(`flac exited with code ${code}.`)
+      })
+    },
+
+    encodeMP3: function(track){
+      if (!track) throw new Error('Track object is null')
+
+      const inputFile = path.resolve(this.tmpdir, track.sourcename),
+            outputFile = path.resolve(this.mp3OutputDir, `${track.filename}.mp3`)
+
+      const cmd = [
+        'lame',
+        '-S',
+        '-V2',
+        '--noreplaygain',
+        '--add-id3v2',
+        `--tt "${track.title}"`,
+        `--ta "${track.artist}"`,
+        `--tl "${track.albumTitle}"`,
+        `--ty "${track.year}"`,
+        `--tn "${track.pos}"`,
+        `--tg "${track.genre}"`,
+        `--ti "${this.imagePath}"`,
+        `--tv "TPOS=${this.cdNumber}"`,
+        `"${inputFile}"`,
+        `"${outputFile}"`
+      ].join(' ')
+      console.log(cmd)
+
+      this.mp3Proc = spawn(cmd, [], {shell: true})
+      this.mp3Proc.stdout.on('data', data => {
+        this.$refs['log-lame'].push(data)
+      })
+      this.mp3Proc.stderr.on('data', data => {
+        this.$refs['log-lame'].push(data)
+      })
+      this.mp3Proc.on('close', (code) => {
+        this.$refs['log-lame'].push(`flac exited with code ${code}.`)
       })
     },
 
@@ -197,17 +240,29 @@ const app = new Vue({
       })
     },
 
-    /*testEncodeFlac: function(){
+    testEncodeFlac: function(){
       const target = this.tracks[0]
-      this.tmpdir = '/home/bleuarff/.config/bfc-ripper/1569871111900'
+      this.tmpdir = '/home/bleuarff/.config/bfc-ripper/rip-1569964527211'
       this.albumArtist = target.artist = 'Ufomammut'
       this.albumTitle = target.albumTitle = '8'
       this.genre = target.genre = 'Doom'
       this.releaseYear = target.year = '2017'
       target.trackCount = this.tracks.length
-
+      this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
       this.encodeFLAC(target)
-    }*/
+    },
+
+    testEncodeMp3: function(){
+      const target = this.tracks[0]
+      this.tmpdir = '/home/bleuarff/.config/bfc-ripper/rip-1569964527211'
+      this.albumArtist = target.artist = 'Ufomammut'
+      this.albumTitle = target.albumTitle = '8'
+      this.genre = target.genre = 'Doom'
+      this.releaseYear = target.year = '2017'
+      target.trackCount = this.tracks.length
+      this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
+      this.encodeMP3(target)
+    },
 
     selectImage: function(e){
       if (!e.currentTarget.files.length)
