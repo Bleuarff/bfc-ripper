@@ -117,7 +117,6 @@ const app = new Vue({
       })
 
       this.cdparanoiaProc.on('close', (code) => {
-        this.ripping = false
         this.$refs['log-paranoia'].push(`cdparanoia exited with code ${code}`)
         this.$refs['log-paranoia'].push(`\nRip time: ${Utils.parseTime(Date.now() - start)}`)
       })
@@ -163,7 +162,13 @@ const app = new Vue({
         this.$refs['log-flac'].push(data)
       })
       this.flacProc.on('close', (code) => {
+        track.status.flac = code
         this.$refs['log-flac'].push(`flac exited with code ${code}.`)
+
+        // Don't start a new process if operations have been cancelled.
+        // Otherwise mp3-encode a track once it's been encoded to flac
+        if (this.ripping)
+          this.encodeMP3(track)
       })
     },
 
@@ -192,21 +197,27 @@ const app = new Vue({
       ].join(' ')
       console.log(cmd)
 
-      this.mp3Proc = spawn(cmd, [], {shell: true})
-      this.mp3Proc.stdout.on('data', data => {
+      const mp3Proc = spawn(cmd, [], {shell: true})
+      mp3Proc.stdout.on('data', data => {
         this.$refs['log-lame'].push(data)
       })
-      this.mp3Proc.stderr.on('data', data => {
+      mp3Proc.stderr.on('data', data => {
         this.$refs['log-lame'].push(data)
       })
-      this.mp3Proc.on('close', (code) => {
+      mp3Proc.on('close', (code) => {
+        track.status.mp3 = code
         this.$refs['log-lame'].push(`flac exited with code ${code}.`)
+
+        // check full process completion
+        if (this.tracks.every(t => t.success))
+          this.ripping = false
       })
     },
 
     // cancel rip. kill child proc.
     cancel: function(){
       this.cdparanoiaProc.kill('SIGTERM')
+      this.ripping = false
     },
 
     // delete temp (wav) folder

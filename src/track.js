@@ -12,6 +12,12 @@ class Track{
     this.year = ''
     this.trackCount = 0
     this.genre = ''
+
+    // -1: initial state, otherwise encoding process exit code
+    this.status = {
+      flac: -1,
+      mp3: -1
+    }
   }
 
   get filename(){
@@ -26,5 +32,7 @@ class Track{
     return `${this.id.toString().padStart(2, '0')}/${this.trackCount.toString().padStart(2, '0')}`
   }
 
-
+  get success(){
+    return this.status.flac == 0 && this.status.mp3 == 0
+  }
 }
