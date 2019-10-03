@@ -16,7 +16,7 @@ const app = new Vue({
     tracks: [],
     imagePath: '', // cover image filepath
     imageUrl: '', // data url
-    cdNumber: '1',
+    discNumber: '01',
     ripping: false,
 
     cdparanoiaProc: null,
@@ -75,6 +75,7 @@ const app = new Vue({
         t.year = this.releaseYear
         t.trackCount = this.tracks.length
         t.genre = this.genre
+        t.discNumber = this.discNumber
       })
 
       const args = [ // cdparanoia arguments
@@ -147,7 +148,7 @@ const app = new Vue({
         `-T TRACKNUMBER="${track.pos}"`,
         `-T DATE="${track.year}"`,
         `-T GENRE="${this.genre}"`,
-        `-T DISCNUMBER="${this.cdNumber}"`,
+        `-T DISCNUMBER="${track.discNumber}"`,
         `--picture="${this.imagePath}"`,
         `-o "${outputFile}"`,
         `"${inputFile}"`
@@ -163,7 +164,7 @@ const app = new Vue({
       })
       this.flacProc.on('close', (code) => {
         track.status.flac = code
-        this.$refs['log-flac'].push(`flac exited with code ${code}.`)
+        this.$refs['log-flac'].push(`flac exited with code ${code}.`, true)
 
         // Don't start a new process if operations have been cancelled.
         // Otherwise mp3-encode a track once it's been encoded to flac
@@ -191,7 +192,7 @@ const app = new Vue({
         `--tn "${track.pos}"`,
         `--tg "${track.genre}"`,
         `--ti "${this.imagePath}"`,
-        `--tv "TPOS=${this.cdNumber}"`,
+        `--tv "TPOS=${track.discNumber}"`,
         `"${inputFile}"`,
         `"${outputFile}"`
       ].join(' ')
@@ -206,7 +207,7 @@ const app = new Vue({
       })
       mp3Proc.on('close', (code) => {
         track.status.mp3 = code
-        this.$refs['log-lame'].push(`flac exited with code ${code}.`)
+        this.$refs['log-lame'].push(`lame exited with code ${code}.`, true)
 
         // check full process completion
         if (this.tracks.every(t => t.success))

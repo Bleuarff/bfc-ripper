@@ -12,6 +12,7 @@ class Track{
     this.year = ''
     this.trackCount = 0
     this.genre = ''
+    this._discNumber = '01'
 
     // -1: initial state, otherwise encoding process exit code
     this.status = {
@@ -34,5 +35,12 @@ class Track{
 
   get success(){
     return this.status.flac == 0 && this.status.mp3 == 0
+  }
+
+  get discNumber(){
+    return this._discNumber
+  }
+  set discNumber(val){
+    this._discNumber = val.padStart(2, '0')
   }
 }
