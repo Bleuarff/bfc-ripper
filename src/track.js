@@ -22,7 +22,7 @@ class Track{
   }
 
   get filename(){
-    return `${this.artist} - ${this.albumTitle} (${this.year}) - ${this.id.toString().padStart(2, '0')} - ${this.title}`
+    return Utils.normalize(`${this.artist} - ${this.albumTitle} (${this.year}) - ${this.id.toString().padStart(2, '0')} - ${this.title}`)
   }
 
   get sourcename(){

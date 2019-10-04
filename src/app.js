@@ -45,7 +45,7 @@ const app = new Vue({
   },
   computed: {
     folderName: function(){
-      return `${this.albumArtist} - ${this.albumTitle} (${this.releaseYear})`
+      return Utils.normalize(`${this.albumArtist} - ${this.albumTitle} (${this.releaseYear})`)
     },
     flacOutputDir: function(){
       return path.resolve(this.config.FLAC.directory, this.folderName)
@@ -255,27 +255,31 @@ const app = new Vue({
       })
     },
 
-    testEncodeFlac: function(){
+    testEncodeFlac: async function(){
       const target = this.tracks[0]
       this.tmpdir = '/home/bleuarff/.config/bfc-ripper/rip-1569964527211'
-      this.albumArtist = target.artist = 'Ufomammut'
+      this.albumArtist = target.artist = 'aäâ\u00e6n\u0303'
       this.albumTitle = target.albumTitle = '8'
-      this.genre = target.genre = 'Doom'
+      this.genre = target.genre = '-aùûüöÖéçàềun-'
       this.releaseYear = target.year = '2017'
       target.trackCount = this.tracks.length
       this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
+
+      await Utils.mkdirp(this.flacOutputDir),
       this.encodeFLAC(target)
     },
 
-    testEncodeMp3: function(){
+    testEncodeMp3: async function(){
       const target = this.tracks[0]
       this.tmpdir = '/home/bleuarff/.config/bfc-ripper/rip-1569964527211'
-      this.albumArtist = target.artist = 'Ufomammut'
+      this.albumArtist = target.artist = 'Ûfömammut'
       this.albumTitle = target.albumTitle = '8'
       this.genre = target.genre = 'Doom'
       this.releaseYear = target.year = '2017'
       target.trackCount = this.tracks.length
       this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
+
+      await Utils.mkdirp(this.mp3OutputDir)
       this.encodeMP3(target)
     },
 

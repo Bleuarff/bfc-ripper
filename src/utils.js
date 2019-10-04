@@ -19,4 +19,15 @@ class Utils{
           sec = Math.floor(val - min*60).toString().padStart(2, '0')
     return `${min}m ${sec}s`
   }
+
+  // remove accented and common special chars
+  static normalize(input){
+    // https://en.wikipedia.org/wiki/Unicode_equivalence#Normalization
+    // http://www.unicode.org/reports/tr15/
+
+    // normalize codepoints (split diacritics) and remove diacritics
+    let value = input.normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    // replace a lot of special chars. Redondant with line above, but also handles non-diacritics special chars (e.g. ligatures)
+    return undiacritics.removeAll(value)
+  }
 }
