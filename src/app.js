@@ -2,7 +2,8 @@
 
 const fsp = require('fs').promises,
       { spawn, exec } = require('child_process'),
-      path = require('path')
+      path = require('path'),
+      os = require('os')
 
 
 
@@ -83,6 +84,8 @@ const app = new Vue({
         '--verbose',
         test ? '1': '--batch' // test mode: rip first track only
       ]
+
+      this.tmpdir = path.resolve(os.tmpdir(), 'bfcrip-' + Date.now().toString())
 
       // create temp dir for wav & flac output dir
       const ps = await Promise.all([
@@ -285,9 +288,4 @@ const app = new Vue({
       this.imageUrl = URL.createObjectURL(file)
     }
   }
-})
-
-// build temp folder for wav files from userData path
-require('electron').ipcRenderer.on('userData', (event, message) => {
-  app.tmpdir = path.resolve(message, 'rip-' + Date.now().toString())
 })
