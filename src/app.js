@@ -61,15 +61,6 @@ const app = new Vue({
     },
 
     rip: async function(test = false){
-      try{
-        this.validate()
-      }
-      catch(ex){
-        console.error(ex)
-        alert(ex.message)
-        return
-      }
-
       /* SETUP */
       this.tracks.forEach(t => {
         t.albumTitle = this.albumTitle
@@ -78,6 +69,14 @@ const app = new Vue({
         t.genre = this.genre
         t.discNumber = this.discNumber
       })
+
+      try{
+        this.validate()
+      }
+      catch(ex){
+        alert(ex.message)
+        return
+      }
 
       const args = [ // cdparanoia arguments
         '--output-wav',
@@ -128,12 +127,11 @@ const app = new Vue({
 
     // checks metadata are there
     validate: function(){
-      if (this.tracks.some(x => !x.artist))
-        throw new Error('Missing artist name')
-      else if (this.tracks.some(x => !x.title))
-        throw new Error('Missing track title')
-      else if (!this.releaseYear)
-        throw new Error('Missing release year')
+      const mandatory = ['artist', 'title', 'albumTitle']
+      mandatory.forEach(field => {
+        if (this.tracks.some(t => !t[field]))
+          throw new Error(`Missing field: ${field}`)
+      })
     },
 
     encodeFLAC: function(track){
@@ -152,7 +150,7 @@ const app = new Vue({
         `-T DATE="${track.year}"`,
         `-T GENRE="${this.genre}"`,
         `-T DISCNUMBER="${track.discNumber}"`,
-        `--picture="${this.imagePath}"`,
+        this.imagePath ? `--picture="${this.imagePath}"` : '',
         `-o "${outputFile}"`,
         `"${inputFile}"`
       ].join(' ')
@@ -201,7 +199,8 @@ const app = new Vue({
         `--ty "${track.year}"`,
         `--tn "${track.pos}"`,
         `--tg "${track.genre}"`,
-        `--ti "${this.imagePath}"`,
+        // `--ti "${this.imagePath}"`,
+        this.imagePath ? `--ti="${this.imagePath}"` : '',
         `--tv "TPOS=${track.discNumber}"`,
         `"${inputFile}"`,
         `"${outputFile}"`
@@ -270,12 +269,12 @@ const app = new Vue({
     testEncodeFlac: async function(){
       const target = this.tracks[0]
       this.tmpdir = '/home/bleuarff/.config/bfc-ripper/rip-1569964527211'
-      this.albumArtist = target.artist = 'aäâ\u00e6n\u0303'
+      this.albumArtist = target.artist = 'ufomammut'
       this.albumTitle = target.albumTitle = '8'
-      this.genre = target.genre = '-aùûüöÖéçàềun-'
-      this.releaseYear = target.year = '2017'
+      this.genre = target.genre = ''
+      this.releaseYear = target.year = ''
       target.trackCount = this.tracks.length
-      this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
+      // this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
 
       await Utils.mkdirp(this.flacOutputDir),
       this.encodeFLAC(target)
@@ -286,10 +285,10 @@ const app = new Vue({
       this.tmpdir = '/home/bleuarff/.config/bfc-ripper/rip-1569964527211'
       this.albumArtist = target.artist = 'Ûfömammut'
       this.albumTitle = target.albumTitle = '8'
-      this.genre = target.genre = 'Doom'
-      this.releaseYear = target.year = '2017'
+      this.genre = target.genre = ''
+      this.releaseYear = target.year = ''
       target.trackCount = this.tracks.length
-      this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
+      // this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
 
       await Utils.mkdirp(this.mp3OutputDir)
       this.encodeMP3(target)
