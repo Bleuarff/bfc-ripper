@@ -22,7 +22,8 @@ class Track{
   }
 
   get filename(){
-    return Utils.normalize(`${this.artist} - ${this.albumTitle} (${this.year}) - ${this.id.toString().padStart(2, '0')} - ${this.title}`)
+    const year = this.year ? ` (${this.year})` : ''
+    return Utils.normalize(`${this.artist} - ${this.albumTitle}${year} - ${this.id.toString().padStart(2, '0')} - ${this.title}`)
   }
 
   get sourcename(){

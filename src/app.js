@@ -45,7 +45,8 @@ const app = new Vue({
   },
   computed: {
     folderName: function(){
-      return Utils.normalize(`${this.albumArtist} - ${this.albumTitle} (${this.releaseYear})`)
+      const year = this.releaseYear ? ` (${this.releaseYear})` : ''
+      return Utils.normalize(`${this.albumArtist} - ${this.albumTitle}${year}`)
     },
     flacOutputDir: function(){
       return path.resolve(this.config.FLAC.directory, this.folderName)
@@ -156,6 +157,7 @@ const app = new Vue({
       ].join(' ')
       console.log(cmd)
 
+      this.$refs['log-flac'].push(`${inputFile}\n→ ${outputFile}`)
       const flacProc = spawn(cmd, [], {shell: true})
       flacProc.stdout.on('data', data => {
         this.$refs['log-flac'].push(data)
@@ -207,6 +209,7 @@ const app = new Vue({
       ].join(' ')
       console.log(cmd)
 
+      this.$refs['log-lame'].push(`${inputFile}\n→ ${outputFile}`)
       const mp3Proc = spawn(cmd, [], {shell: true})
       mp3Proc.stdout.on('data', data => {
         this.$refs['log-lame'].push(data)
@@ -223,7 +226,7 @@ const app = new Vue({
           this.ripping = false
           const summary = this.tracks.map(t => `track ${t.id} done with exit code ${t.status.mp3}`).join('\n')
           const final = this.tracks.every(t => t.status.mp3 == 0) ? '\nSuccess, all tracks OK\n' : ''
-          this.$refs['log-flac'].push('***********************\n' + summary + final, true)
+          this.$refs['log-lame'].push('***********************\n' + summary + final, true)
         }
       })
     },
@@ -267,7 +270,7 @@ const app = new Vue({
     },
 
     testEncodeFlac: async function(){
-      const target = this.tracks[0]
+      const target = new Track({ id: '1' })
       this.tmpdir = '/home/bleuarff/.config/bfc-ripper/rip-1569964527211'
       this.albumArtist = target.artist = 'ufomammut'
       this.albumTitle = target.albumTitle = '8'
@@ -281,7 +284,7 @@ const app = new Vue({
     },
 
     testEncodeMp3: async function(){
-      const target = this.tracks[0]
+      const target = new Track({ id: '1' })
       this.tmpdir = '/home/bleuarff/.config/bfc-ripper/rip-1569964527211'
       this.albumArtist = target.artist = 'Ûfömammut'
       this.albumTitle = target.albumTitle = '8'
