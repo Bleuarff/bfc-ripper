@@ -112,7 +112,7 @@ const app = new Vue({
           if (tn > 0)
             track = this.tracks.find(x => x.id === tn)
         }
-        else if (data.indexOf('Done.') > -1){
+        else if (data.indexOf('Done.') > -1){ // or get last track
           track = this.tracks[this.tracks.length - 1]
         }
 
@@ -158,14 +158,14 @@ const app = new Vue({
       ].join(' ')
       console.log(cmd)
 
-      this.flacProc = spawn(cmd, [], {shell: true})
-      this.flacProc.stdout.on('data', data => {
+      const flacProc = spawn(cmd, [], {shell: true})
+      flacProc.stdout.on('data', data => {
         this.$refs['log-flac'].push(data)
       })
-      this.flacProc.stderr.on('data', data => {
+      flacProc.stderr.on('data', data => {
         this.$refs['log-flac'].push(data)
       })
-      this.flacProc.on('close', (code) => {
+      flacProc.on('close', (code) => {
         track.status.flac = code
         this.$refs['log-flac'].push(`flac exited with code ${code}.`, true)
 
@@ -173,6 +173,13 @@ const app = new Vue({
         // Otherwise mp3-encode a track once it's been encoded to flac
         if (this.ripping)
           this.encodeMP3(track)
+
+        // check if all tracks are encoded
+        if (this.tracks.every(t => t.status.flac != -1)){
+          const summary = this.tracks.map(t => `track ${t.id} done with exit code ${t.status.flac}`).join('\n')
+          const final = this.tracks.every(t => t.status.flac == 0) ? '\nSuccess, all tracks OK\n' : ''
+          this.$refs['log-flac'].push('***********************\n' + summary + final, true)
+        }
       })
     },
 
@@ -212,13 +219,18 @@ const app = new Vue({
         track.status.mp3 = code
         this.$refs['log-lame'].push(`lame exited with code ${code}.`, true)
 
-        // check full process completion
-        if (this.tracks.every(t => t.success))
+        // check if all tracks are encoded
+        if (this.tracks.every(t => t.status.mp3 != -1)){
           this.ripping = false
+          const summary = this.tracks.map(t => `track ${t.id} done with exit code ${t.status.mp3}`).join('\n')
+          const final = this.tracks.every(t => t.status.mp3 == 0) ? '\nSuccess, all tracks OK\n' : ''
+          this.$refs['log-flac'].push('***********************\n' + summary + final, true)
+        }
       })
     },
 
     // cancel rip. kill child proc.
+    // No need to kill encoding processes, they're quick enough.
     cancel: function(){
       this.cdparanoiaProc.kill('SIGTERM')
       this.ripping = false
