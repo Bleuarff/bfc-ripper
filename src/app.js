@@ -23,6 +23,11 @@ const app = new Vue({
     cdparanoiaProc: null,
     config: null,
     tmpdir: '',
+
+    // rip options
+    encodeFlac: true,
+    encodeMp3: true,
+    singleTrack: false
   },
   mounted: async function(){
     this.start()

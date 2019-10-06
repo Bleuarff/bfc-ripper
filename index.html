@@ -9,55 +9,73 @@
     <script src='src/track.js'></script>
     <script src='src/bfc-log.js'></script>
     <script src='src/undiacritics.js'></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style/style.css">
   </head>
   <body>
     <div id="app">
-      <div id="metadata">
-        <div id="cdinfo">
-          <div>
-            <label>Artist</label><input type="text" placeholder="Album Artist" v-model="albumArtist" class="wide">
+      <div id="cdinfo">
+        <div id="block-1">
+          <div id="album">
+            <div>
+              <label>Artist</label><input type="text" v-model="albumArtist" class="wide">
+            </div>
+            <div>
+              <label>Album</label><input type="text" v-model="albumTitle" class="wide">
+            </div>
+            <div class="ygn">
+              <div>
+                <label>Year</label><input type="text" class="year" v-model="releaseYear">
+              </div>
+              <div>
+                <label class="genre">Genre</label><input type="text" class="genre" placeholder="Metaaaal" v-model="genre">
+              </div>
+              <div>
+                <label class="discNumber">CD #</label><input type="text" class="discNumber" v-model="discNumber">
+              </div>
+            </div>
           </div>
-          <div>
-            <label>Album</label><input type="text" placeholder="Album Title" v-model="albumTitle" class="wide">
+          <div class="options">
+            <div>
+              <input disabled type="checkbox" v-model="encodeFlac" id="opt-flac"><label for="opt-flac">Encode as FLAC</label>
+            </div>
+            <div>
+              <input disabled type="checkbox" v-model="encodeMp3" id="opt-mp3"><label for="opt-mp3">Encode as MP3</label>
+            </div>
+            <div>
+              <input disabled type="checkbox" v-model="singleTrack" id="opt-singletrack"><label for="opt-singletrak">Rip as a single track</label>
+            </div>
           </div>
-          <div>
-            <label>Year</label><input type="number" placeholder="Release Year" v-model="releaseYear">
-            <label>Genre</label><input type="text" placeholder="Genre" v-model="genre">
-            <label>CD #</label><input type="text" v-model="discNumber">
-          </div>
-
         </div>
         <div id="image-ctnr">
-          <input id="fileInput" type="file" accept="image/jpeg, image/png" v-on:change="selectImage"/>
           <div class="img">
             <img :src="imageUrl">
           </div>
+          <input id="fileInput" type="file" accept="image/jpeg, image/png" v-on:change="selectImage"/>
         </div>
-
-        <table id="tracks">
-          <thead>
-            <th>#</th>
-            <th>Artist</th>
-            <th>Title</th>
-            <th>Length</th>
-            <th>Start</th>
-          </thead>
-          <tbody id="tbody">
-            <tr v-for="tk in tracks">
-              <td>{{tk.id}}</td>
-              <td><input type="text" placeholder="track artist" v-model="tk.artist"></td>
-              <td><input type="text" placeholder="track title" v-model="tk.title"></td>
-              <td>{{tk.length}}</td>
-              <td>{{tk.start}}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <button id="rip" v-on:click="rip()" :disabled="ripping">Rip it!</button>
-
-        <button id="cancel" v-on:click="cancel" v-show="ripping">Cancel</button>
       </div>
+
+      <table id="tracks">
+        <thead>
+          <th>#</th>
+          <th>Artist</th>
+          <th>Title</th>
+          <th>Length</th>
+          <th>Start</th>
+        </thead>
+        <tbody id="tbody">
+          <tr v-for="tk in tracks">
+            <td>{{tk.id}}</td>
+            <td><input type="text" placeholder="track artist" v-model="tk.artist"></td>
+            <td><input type="text" placeholder="track title" v-model="tk.title"></td>
+            <td>{{tk.length}}</td>
+            <td>{{tk.start}}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <button id="rip" v-on:click="rip()" :disabled="ripping">Rip it!</button>
+
+      <button id="cancel" v-on:click="cancel" v-show="ripping">Cancel</button>
 
       <h2>Logs</h2>
       <div id="logs">
