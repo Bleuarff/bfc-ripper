@@ -7,7 +7,7 @@ class Track{
     this.length = data.length
 
     this.artist = ''
-    this.title = 'default #' + this.id
+    // this.title = 'default #' + this.id
     this.albumTitle = ''
     this.year = ''
     this.trackCount = 0

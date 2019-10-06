@@ -96,7 +96,38 @@ body{
 
 #tracks{
   width: 100%;
-  margin-top: 2em;
+  margin: 2em 0 .8em 0;
+  border-collapse: collapse;
+  text-align: center;
+
+  td:nth-child(4),
+  td:nth-child(5){
+    width: 5.5em;
+  }
+
+  tr:nth-child(even){
+    @bg: #d2d2d2;
+    background: @bg;
+
+    input{
+      background: @bg;
+      border: 1px solid #9e9e9e;
+    }
+  }
+
+  input{
+    width: 90%;
+  }
+}
+
+.nodisc{
+  font-size: 1.7em;
+  border: 2px solid #af0c0cb8;
+  border-radius: 8px;
+  text-align: center;
+  margin: 1.4em 2em 1em 2em;
+  padding: 0.7em;
+  box-shadow: inset 1px 1px #af0c0c63;
 }
 
 h2{

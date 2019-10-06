@@ -54,7 +54,7 @@
         </div>
       </div>
 
-      <table id="tracks">
+      <table id="tracks" v-if="tracks.length !== 0">
         <thead>
           <th>#</th>
           <th>Artist</th>
@@ -72,8 +72,11 @@
           </tr>
         </tbody>
       </table>
+      <div v-else class="nodisc">
+        <span>No disc detected.</span>
+      </div>
 
-      <button id="rip" v-on:click="rip()" :disabled="ripping">Rip it!</button>
+      <button id="rip" v-on:click="rip()" :disabled="ripping || tracks.length === 0">Rip it!</button>
 
       <button id="cancel" v-on:click="cancel" v-show="ripping">Cancel</button>
 
