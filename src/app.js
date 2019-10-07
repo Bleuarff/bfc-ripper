@@ -274,6 +274,35 @@ const app = new Vue({
       })
     },
 
+    // track edition: select next logical field upon certain keydown
+    moveFocus: function(e){
+      let target
+
+      if (e.key === 'ArrowUp'){// previous field of same type (artist or title)
+        const row = e.currentTarget.parentElement.parentElement.previousElementSibling
+        if (row)
+          target = row.querySelector(`.${e.currentTarget.classList[0]}`)
+      }
+      else if (e.key === 'ArrowDown'){// next field of same type
+        const row = e.currentTarget.parentElement.parentElement.nextElementSibling
+        if (row)
+          target = row.querySelector(`.${e.currentTarget.classList[0]}`)
+      }
+      else if (e.key === 'Enter'){// next logical field
+        const type = e.currentTarget.classList[0]
+        if (type === 'trackArtist')
+          target = e.currentTarget.parentElement.parentElement.querySelector('.trackTitle')
+        else if (type === 'trackTitle'){
+          const row = e.currentTarget.parentElement.parentElement.nextElementSibling
+          if (row)
+            target = row.querySelector('.trackArtist')
+        }
+      }
+
+      if (target)
+        target.focus()
+    },
+
     testEncodeFlac: async function(){
       const target = new Track({ id: '1' })
       this.tmpdir = '/home/bleuarff/.config/bfc-ripper/rip-1569964527211'

@@ -66,10 +66,10 @@
           <tr v-for="tk in tracks">
             <td>{{tk.id}}</td>
             <td>
-              <input type="text" placeholder="track artist" v-model="tk.artist">
+              <input type="text" v-model="tk.artist" class="trackArtist" v-on:keydown.enter.up.down="moveFocus" placeholder="track artist" >
             </td>
-            <td class="title">
-              <input type="text" placeholder="track title" v-model.lazy="tk.title" v-on:keydown.enter="nextTitle">
+            <td>
+              <input type="text" v-model.lazy="tk.title" class="trackTitle" placeholder="track title" v-on:keydown.enter.up.down="moveFocus">
             </td>
             <td>{{tk.length}}</td>
             <td>{{tk.start}}</td>
