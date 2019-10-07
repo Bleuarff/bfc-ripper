@@ -11,6 +11,8 @@ body{
 
 #app{
   height: 100%;
+  display: flex;
+  flex-flow: column nowrap;
 }
 
 #metadata{
@@ -130,6 +132,11 @@ body{
   box-shadow: inset 1px 1px #af0c0c63;
 }
 
+.btn{
+  font-size: 1.2em;
+  padding: .55em 1.8em;
+}
+
 h2{
   margin: 0;
   margin-top: 2em
@@ -140,8 +147,7 @@ h2{
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: stretch;
-  height: 50%;
-
+  flex: 1 1 auto;
 
   .bfc-log{
     width: 33%;
