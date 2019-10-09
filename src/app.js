@@ -17,6 +17,7 @@ const app = new Vue({
     tracks: [],
     imagePath: '', // cover image filepath
     imageUrl: '', // data url
+    imageSize: 0,
     discNumber: '01',
     ripping: false,
 
@@ -27,7 +28,8 @@ const app = new Vue({
     // rip options
     encodeFlac: true,
     encodeMp3: true,
-    singleTrack: false
+    singleTrack: false,
+    stopOnError: false
   },
   mounted: async function(){
     this.start()
@@ -206,8 +208,7 @@ const app = new Vue({
         `--ty "${track.year}"`,
         `--tn "${track.pos}"`,
         `--tg "${track.genre}"`,
-        // `--ti "${this.imagePath}"`,
-        this.imagePath ? `--ti="${this.imagePath}"` : '',
+        this.imagePath ? `--ti "${this.imagePath}"` : '',
         `--tv "TPOS=${track.discNumber}"`,
         `"${inputFile}"`,
         `"${outputFile}"`
@@ -295,7 +296,9 @@ const app = new Vue({
         else if (type === 'trackTitle'){
           const row = e.currentTarget.parentElement.parentElement.nextElementSibling
           if (row)
-            target = row.querySelector('.trackArtist')
+            target = row.querySelector('.trackTitle')
+          else
+            target = this.$el.getElementById('rip') // if no next row, focus on rip button
         }
       }
 
@@ -338,6 +341,7 @@ const app = new Vue({
       const file = e.currentTarget.files[0]
       this.imagePath = file.path
       this.imageUrl = URL.createObjectURL(file)
+      this.imageSize = (file.size / 1e3).toFixed(1)
     }
   }
 })

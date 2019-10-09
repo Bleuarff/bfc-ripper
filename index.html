@@ -42,7 +42,10 @@
               <input disabled type="checkbox" v-model="encodeMp3" id="opt-mp3"><label for="opt-mp3">Encode as MP3</label>
             </div>
             <div>
-              <input disabled type="checkbox" v-model="singleTrack" id="opt-singletrack"><label for="opt-singletrak">Rip as a single track</label>
+              <input disabled type="checkbox" v-model="singleTrack" id="opt-singletrack"><label for="opt-singletrack">Rip as a single track</label>
+            </div>
+            <div>
+              <input disabled type="checkbox" v-model="stopOnError" id="opt-stopOnErr"><label for="opt-stopOnErr">Stop rip on error</label>
             </div>
           </div>
         </div>
@@ -51,6 +54,7 @@
             <img :src="imageUrl">
           </div>
           <input id="fileInput" type="file" accept="image/jpeg, image/png" v-on:change="selectImage"/>
+          <span v-show="imageSize" id="imageSize">{{imageSize}}kB</span>
         </div>
       </div>
 
