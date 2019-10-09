@@ -27,6 +27,7 @@ class Utils{
 
     // normalize codepoints (split diacritics) and remove diacritics
     let value = input.normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+                    .replace(/['"]/g, '')
     // replace a lot of special chars. Redondant with line above, but also handles non-diacritics special chars (e.g. ligatures)
     return undiacritics.removeAll(value)
   }
