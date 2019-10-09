@@ -17,20 +17,20 @@
         <div id="block-1">
           <div id="album">
             <div>
-              <label>Artist</label><input type="text" v-model="albumArtist" class="wide">
+              <label>Artist</label><input type="text" v-model="albumArtist" class="wide" :disabled="ripping">
             </div>
             <div>
-              <label>Album</label><input type="text" v-model="albumTitle" class="wide">
+              <label>Album</label><input type="text" v-model="albumTitle" class="wide" :disabled="ripping">
             </div>
             <div class="ygn">
               <div>
-                <label>Year</label><input type="text" class="year" v-model="releaseYear">
+                <label>Year</label><input type="text" class="year" v-model="releaseYear" :disabled="ripping">
               </div>
               <div>
-                <label class="genre">Genre</label><input type="text" class="genre" placeholder="Metaaaal" v-model="genre">
+                <label class="genre">Genre</label><input type="text" class="genre" placeholder="Metaaaal" v-model="genre" :disabled="ripping">
               </div>
               <div>
-                <label class="discNumber">CD #</label><input type="text" class="discNumber" v-model="discNumber">
+                <label class="discNumber">CD #</label><input type="text" class="discNumber" v-model="discNumber" :disabled="ripping">
               </div>
             </div>
           </div>
@@ -53,7 +53,7 @@
           <div class="img">
             <img :src="imageUrl">
           </div>
-          <input id="fileInput" type="file" accept="image/jpeg, image/png" v-on:change="selectImage"/>
+          <input id="fileInput" type="file" accept="image/jpeg, image/png" v-on:change="selectImage" :disabled="ripping"/>
           <span v-show="imageSize" id="imageSize">{{imageSize}}kB</span>
         </div>
       </div>
@@ -70,10 +70,10 @@
           <tr v-for="tk in tracks">
             <td>{{tk.id}}</td>
             <td>
-              <input type="text" v-model="tk.artist" class="trackArtist" v-on:keydown.enter.up.down="moveFocus" placeholder="track artist" >
+              <input type="text" v-model="tk.artist" class="trackArtist" v-on:keydown.enter.up.down="moveFocus" placeholder="track artist" :disabled="ripping">
             </td>
             <td>
-              <input type="text" v-model.lazy="tk.title" class="trackTitle" placeholder="track title" v-on:keydown.enter.up.down="moveFocus">
+              <input type="text" v-model.lazy="tk.title" class="trackTitle" placeholder="track title" v-on:keydown.enter.up.down="moveFocus" :disabled="ripping">
             </td>
             <td>{{tk.length}}</td>
             <td>{{tk.start}}</td>
