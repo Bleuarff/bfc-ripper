@@ -1,10 +1,8 @@
 
-FLAC:
-  # FLAC files base directory. Must be absolute path.
-  directory: /mnt/zik/FLAC
-  # directory: /media/bleuarff/DIVERS/bfc
+FLAC: # FLAC files base directory. Must be absolute path.
+  directory: /media/bleuarff/DIVERS/bfc
+  # directory: /mnt/zik/FLAC
 
-MP3:
-  # MP3 files base directory. Must be absolute path.
-  # directory: /media/bleuarff/DIVERS/bfc
-  directory: /mnt/zik/MP3
+MP3: # MP3 files base directory. Must be absolute path.
+  directory: /media/bleuarff/DIVERS/bfc
+  # directory: /mnt/zik/MP3

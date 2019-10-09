@@ -150,7 +150,7 @@ const app = new Vue({
 
       const cmd = [
         'flac',
-        '-3f', // TODO: remove f option when done testing
+        '-3',
         `-T ARTIST="${track.artist}"`,
         `-T TITLE="${track.title}"`,
         `-T ALBUM="${track.albumTitle}"`,
@@ -175,6 +175,11 @@ const app = new Vue({
       flacProc.on('close', (code) => {
         track.status.flac = code
         this.$refs['log-flac'].push(`flac exited with code ${code}.`, true)
+
+        if (code != 0 && this.stopOnError){ // stop everything
+          this.cancel()
+          return
+        }
 
         // Don't start a new process if operations have been cancelled.
         // Otherwise mp3-encode a track once it's been encoded to flac
@@ -227,6 +232,11 @@ const app = new Vue({
         track.status.mp3 = code
         this.$refs['log-lame'].push(`lame exited with code ${code}.`, true)
 
+        if (code != 0 && this.stopOnError){ // stop everything
+          this.cancel()
+          return
+        }
+
         // check if all tracks are encoded
         if (this.tracks.every(t => t.status.mp3 != -1)){
           this.ripping = false
@@ -242,6 +252,10 @@ const app = new Vue({
     cancel: function(){
       this.cdparanoiaProc.kill('SIGTERM')
       this.ripping = false
+      const msg = '*** CANCEL RIP ***'
+      this.$refs['log-lame'].push(msg)
+      this.$refs['log-flac'].push(msg)
+      this.$refs['log-paranoia'].push(msg)
     },
 
     // delete temp (wav) folder
@@ -297,8 +311,6 @@ const app = new Vue({
           const row = e.currentTarget.parentElement.parentElement.nextElementSibling
           if (row)
             target = row.querySelector('.trackTitle')
-          else
-            target = this.$el.getElementById('rip') // if no next row, focus on rip button
         }
       }
 
