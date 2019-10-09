@@ -138,9 +138,27 @@ body{
   box-shadow: inset 1px 1px #af0c0c63;
 }
 
-.btn{
-  font-size: 1.2em;
-  padding: .55em 1.8em;
+#buttons{
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  position: relative;
+  .btn{
+    font-size: 1.2em;
+    padding: .55em 1.8em;
+    margin-right: 2em;
+  }
+  .config-outputs{
+    position: absolute;
+    left: 350px;
+    top:0;
+    height: 100%;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: space-around;
+    margin-left: 2em;
+    font-size: .9em;
+  }
 }
 
 h2{

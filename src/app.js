@@ -29,7 +29,7 @@ const app = new Vue({
     encodeFlac: true,
     encodeMp3: true,
     singleTrack: false,
-    stopOnError: false
+    stopOnError: true
   },
   mounted: async function(){
     this.start()
