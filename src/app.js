@@ -3,7 +3,8 @@
 const fsp = require('fs').promises,
       { spawn, exec } = require('child_process'),
       path = require('path'),
-      os = require('os')
+      os = require('os'),
+      { safeLoad } = require('js-yaml')
 
 
 
@@ -33,16 +34,7 @@ const app = new Vue({
   },
   mounted: async function(){
     this.start()
-
-    try{
-      const { safeLoad } = require('js-yaml')
-
-      const conf = await fsp.readFile('./config.yml', 'utf8')
-      this.config = safeLoad(conf)
-    }
-    catch(ex){
-      alert('Error loading config file.')
-    }
+    this.loadConfig()
   },
   watch: {
     albumArtist: function(val){
@@ -354,6 +346,16 @@ const app = new Vue({
       this.imagePath = file.path
       this.imageUrl = URL.createObjectURL(file)
       this.imageSize = (file.size / 1e3).toFixed(1)
+    },
+
+    loadConfig: async function(){
+      try{
+        const conf = await fsp.readFile('./config.yml', 'utf8')
+        this.config = safeLoad(conf)
+      }
+      catch(ex){
+        alert('Error loading config file.')
+      }
     }
   }
 })

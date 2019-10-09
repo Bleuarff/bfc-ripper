@@ -92,6 +92,7 @@
         <div class="config-outputs" v-if="config">
           <div>FLAC: {{config.FLAC.directory}}</div>
           <div>MP3: {{config.MP3.directory}}</div>
+          <button v-on:click="loadConfig">Reload config</button>
         </div>
       </div>
 
