@@ -42,10 +42,10 @@
               <input disabled type="checkbox" v-model="encodeMp3" id="opt-mp3"><label for="opt-mp3">Encode as MP3</label>
             </div>
             <div>
-              <input disabled type="checkbox" v-model="singleTrack" id="opt-singletrack"><label for="opt-singletrack">Rip as a single track</label>
+              <input type="checkbox" v-model="singleTrack" id="opt-singletrack" :disabled="ripping"><label for="opt-singletrack">Rip as a single track</label>
             </div>
             <div>
-              <input type="checkbox" v-model="stopOnError" id="opt-stopOnErr"><label for="opt-stopOnErr">Stop rip on encoding error</label>
+              <input type="checkbox" v-model="stopOnError" id="opt-stopOnErr" :disabled="ripping"><label for="opt-stopOnErr">Stop rip on encoding error</label>
             </div>
           </div>
         </div>
@@ -85,7 +85,7 @@
       </div>
 
       <div id="buttons">
-        <button id="rip" class="btn" v-on:click="rip()" :disabled="ripping || tracks.length === 0">Rip it!</button>
+        <button id="rip" class="btn" v-on:click="rip" :disabled="ripping || tracks.length === 0">Rip it!</button>
 
         <button id="cancel" class="btn" v-on:click="cancel" v-show="ripping">Cancel</button>
 

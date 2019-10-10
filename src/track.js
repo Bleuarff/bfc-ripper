@@ -1,7 +1,7 @@
 'use strict'
 
 class Track{
-  constructor(data){
+  constructor(data, singleTrack = false){
     this.id = data.id
     this.start = data.start
     this.length = data.length
@@ -13,6 +13,7 @@ class Track{
     this.trackCount = 0
     this.genre = ''
     this._discNumber = '01'
+    this.singleTrack = singleTrack
 
     // -1: initial state, otherwise encoding process exit code
     this.status = {
@@ -23,11 +24,17 @@ class Track{
 
   get filename(){
     const year = this.year ? ` (${this.year})` : ''
-    return Utils.normalize(`${this.artist} - ${this.albumTitle}${year} - ${this.id.toString().padStart(2, '0')} - ${this.title}`)
+    let name = `${this.artist} - ${this.albumTitle}${year}`
+    if (!this.singleTrack)
+      name += ` - ${this.id.toString().padStart(2, '0')} - ${this.title}`
+    return Utils.normalize(name)
   }
 
   get sourcename(){
-    return `track${this.id.toString().padStart(2, '0')}.cdda.wav`
+    let prefix = ''
+    if (!this.singleTrack)
+      prefix = `track${this.id.toString().padStart(2, '0')}.`
+    return `${prefix}cdda.wav`
   }
 
   get pos(){

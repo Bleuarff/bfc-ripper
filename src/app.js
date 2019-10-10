@@ -60,7 +60,7 @@ const app = new Vue({
       this.tracks = await this.getTOC()
     },
 
-    rip: async function(test = false){
+    rip: async function(){
       /* SETUP */
       this.tracks.forEach(t => {
         t.albumTitle = this.albumTitle
@@ -81,7 +81,7 @@ const app = new Vue({
       const args = [ // cdparanoia arguments
         '--output-wav',
         '--verbose',
-        test ? '1': '--batch' // test mode: rip first track only
+        this.singleTrack ? `"1-${this.tracks.length}"`: '--batch' // test mode: rip first track only
       ]
 
       this.tmpdir = path.resolve(os.tmpdir(), 'bfcrip-' + Date.now().toString())
@@ -96,6 +96,7 @@ const app = new Vue({
       /* Start ripping process */
 
       this.ripping = true
+      console.log('cdparanoia ' + args.join(' '))
       const start = Date.now()
       this.cdparanoiaProc = spawn('cdparanoia', args, {cwd: this.tmpdir})
 
@@ -104,15 +105,27 @@ const app = new Vue({
         this.$refs['log-paranoia'].push(data)
 
         let track
-        // detect a track is done when cdparanoia announces it starts a new track.
+
+        // detect a track is done when cdparanoia announces it starts a new track...
         const match = /outputting to track(?<tn>\d+)/.exec(data)
         if (match){
           const tn = parseInt(match.groups.tn, 10) - 1 // get previous track number
           if (tn > 0)
             track = this.tracks.find(x => x.id === tn)
         }
-        else if (data.indexOf('Done.') > -1){ // or get last track
-          track = this.tracks[this.tracks.length - 1]
+        // ...or when it's done.
+        else if (data.indexOf('Done.') > -1){
+          if (!this.singleTrack)
+            track = this.tracks[this.tracks.length - 1]
+          else{
+            track = new Track({id: 1}, true)
+            track.artist = this.albumArtist
+            track.title = track.albumTitle = this.albumTitle
+            track.year = this.releaseYear
+            track.genre = this.genre
+            track.trackCount = this.tracks.length
+            track.discNumber = this.discNumber
+          }
         }
 
         if (track)
@@ -127,7 +140,11 @@ const app = new Vue({
 
     // checks metadata are there
     validate: function(){
-      const mandatory = ['artist', 'title', 'albumTitle']
+      const mandatory = ['artist', 'albumTitle']
+
+      if (!this.singleTrack) // title field is mandatory if not ripping as single track
+        mandatory.push('title')
+
       mandatory.forEach(field => {
         if (this.tracks.some(t => !t[field]))
           throw new Error(`Missing field: ${field}`)
@@ -179,9 +196,10 @@ const app = new Vue({
           this.encodeMP3(track)
 
         // check if all tracks are encoded
-        if (this.tracks.every(t => t.status.flac != -1)){
-          const summary = this.tracks.map(t => `track ${t.id} done with exit code ${t.status.flac}`).join('\n')
-          const final = this.tracks.every(t => t.status.flac == 0) ? '\nSuccess, all tracks OK\n' : ''
+        const trackList = this.singleTrack ? [track] : this.tracks
+        if (trackList.every(t => t.status.flac != -1)){
+          const summary = trackList.map(t => `track ${t.id} done with exit code ${t.status.flac}`).join('\n')
+          const final = trackList.every(t => t.status.flac == 0) ? '\nSuccess, all tracks OK\n' : ''
           this.$refs['log-flac'].push('***********************\n' + summary + final, true)
         }
       })
@@ -230,10 +248,11 @@ const app = new Vue({
         }
 
         // check if all tracks are encoded
-        if (this.tracks.every(t => t.status.mp3 != -1)){
+        const trackList = this.singleTrack ? [track] : this.tracks
+        if (trackList.every(t => t.status.mp3 != -1)){
           this.ripping = false
-          const summary = this.tracks.map(t => `track ${t.id} done with exit code ${t.status.mp3}`).join('\n')
-          const final = this.tracks.every(t => t.status.mp3 == 0) ? '\nSuccess, all tracks OK\n' : ''
+          const summary = trackList.map(t => `track ${t.id} done with exit code ${t.status.mp3}`).join('\n')
+          const final = trackList.every(t => t.status.mp3 == 0) ? '\nSuccess, all tracks OK\n' : ''
           this.$refs['log-lame'].push('***********************\n' + summary + final, true)
         }
       })
