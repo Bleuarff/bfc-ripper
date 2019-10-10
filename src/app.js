@@ -20,6 +20,7 @@ const app = new Vue({
     imageUrl: '', // data url
     imageSize: 0,
     discNumber: '01',
+    runtime: '',
     ripping: false,
 
     cdparanoiaProc: null,
@@ -57,7 +58,9 @@ const app = new Vue({
   methods: {
     // start: refresh TOC
     start: async function(){
-      this.tracks = await this.getTOC()
+      const toc = await this.getTOC()
+      this.tracks = toc.tracks
+      this.runtime = toc.runtime
     },
 
     rip: async function(){
@@ -279,7 +282,9 @@ const app = new Vue({
       })
     },
 
-    // returns an array of tracks with basic info
+    // returns object with 2 properties:
+    // tracks: array of Tracks with basic info,
+    // runtime: (string) total cd runtime
     getTOC: function(){
       return new Promise((resolve, reject) => {
         exec('cdparanoia -Q', (err, stdout, stderr) => {
@@ -295,7 +300,11 @@ const app = new Vue({
               length: match.groups.length
             }))
           }
-          resolve(tracks)
+
+          // get total cd runtime
+          const rtm = /TOTAL\s*\d+\s*\[(?<rt>\d+:\d+\.\d+)\]/i.exec(stderr),
+                runtime = rtm ? rtm.groups.rt : ''
+          resolve({tracks: tracks, runtime: runtime})
         })
       })
     },
