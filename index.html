@@ -36,16 +36,16 @@
           </div>
           <div class="options">
             <div>
-              <input disabled type="checkbox" v-model="encodeFlac" id="opt-flac"><label for="opt-flac">Encode as FLAC</label>
+              <input type="checkbox" v-model="opts.encodeFlac" id="opt-flac" :disabled="ripping"><label for="opt-flac">Encode as FLAC</label>
             </div>
             <div>
-              <input disabled type="checkbox" v-model="encodeMp3" id="opt-mp3"><label for="opt-mp3">Encode as MP3</label>
+              <input type="checkbox" v-model="opts.encodeMp3" id="opt-mp3" :disabled="ripping"><label for="opt-mp3">Encode as MP3</label>
             </div>
             <div>
-              <input type="checkbox" v-model="singleTrack" id="opt-singletrack" :disabled="ripping"><label for="opt-singletrack">Rip as a single track</label>
+              <input type="checkbox" v-model="opts.singleTrack" id="opt-singletrack" :disabled="ripping"><label for="opt-singletrack">Rip as a single track</label>
             </div>
             <div>
-              <input type="checkbox" v-model="stopOnError" id="opt-stopOnErr" :disabled="ripping"><label for="opt-stopOnErr">Stop rip on encoding error</label>
+              <input type="checkbox" v-model="opts.stopOnError" id="opt-stopOnErr" :disabled="ripping"><label for="opt-stopOnErr">Stop rip on encoding error</label>
             </div>
           </div>
         </div>

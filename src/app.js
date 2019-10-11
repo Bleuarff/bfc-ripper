@@ -28,10 +28,12 @@ const app = new Vue({
     tmpdir: '',
 
     // rip options
-    encodeFlac: true,
-    encodeMp3: true,
-    singleTrack: false,
-    stopOnError: true
+    opts: {
+      encodeFlac: true,
+      encodeMp3: true,
+      singleTrack: false,
+      stopOnError: true
+    }
   },
   mounted: async function(){
     this.start()
@@ -84,7 +86,7 @@ const app = new Vue({
       const args = [ // cdparanoia arguments
         '--output-wav',
         '--verbose',
-        this.singleTrack ? `"1-${this.tracks.length}"`: '--batch' // test mode: rip first track only
+        this.opts.singleTrack ? `"1-${this.tracks.length}"`: '--batch' // test mode: rip first track only
       ]
 
       this.tmpdir = path.resolve(os.tmpdir(), 'bfcrip-' + Date.now().toString())
@@ -118,7 +120,7 @@ const app = new Vue({
         }
         // ...or when it's done.
         else if (data.indexOf('Done.') > -1){
-          if (!this.singleTrack)
+          if (!this.opts.singleTrack)
             track = this.tracks[this.tracks.length - 1]
           else{
             track = new Track({id: 1}, true)
@@ -145,7 +147,7 @@ const app = new Vue({
     validate: function(){
       const mandatory = ['artist', 'albumTitle']
 
-      if (!this.singleTrack) // title field is mandatory if not ripping as single track
+      if (!this.opts.singleTrack) // title field is mandatory if not ripping as single track
         mandatory.push('title')
 
       mandatory.forEach(field => {
@@ -188,7 +190,7 @@ const app = new Vue({
         track.status.flac = code
         this.$refs['log-flac'].push(`flac exited with code ${code}.`, true)
 
-        if (code != 0 && this.stopOnError){ // stop everything
+        if (code != 0 && this.opts.stopOnError){ // stop everything
           this.cancel(true)
           return
         }
@@ -199,7 +201,7 @@ const app = new Vue({
           this.encodeMP3(track)
 
         // check if all tracks are encoded
-        const trackList = this.singleTrack ? [track] : this.tracks
+        const trackList = this.opts.singleTrack ? [track] : this.tracks
         if (trackList.every(t => t.status.flac != -1)){
           const summary = trackList.map(t => `track ${t.id} done with exit code ${t.status.flac}`).join('\n')
           const final = trackList.every(t => t.status.flac == 0) ? '\nSuccess, all tracks OK\n' : ''
@@ -245,13 +247,13 @@ const app = new Vue({
         track.status.mp3 = code
         this.$refs['log-lame'].push(`lame exited with code ${code}.`, true)
 
-        if (code != 0 && this.stopOnError){ // stop everything
+        if (code != 0 && this.opts.stopOnError){ // stop everything
           this.cancel(true)
           return
         }
 
         // check if all tracks are encoded
-        const trackList = this.singleTrack ? [track] : this.tracks
+        const trackList = this.opts.singleTrack ? [track] : this.tracks
         if (trackList.every(t => t.status.mp3 != -1)){
           this.ripping = false
           const summary = trackList.map(t => `track ${t.id} done with exit code ${t.status.mp3}`).join('\n')
