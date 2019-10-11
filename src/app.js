@@ -66,6 +66,11 @@ const app = new Vue({
     },
 
     rip: async function(){
+      if (!this.opts.encodeFlac && !this.opts.encodeMp3){
+        alert('Select at least one encoding option (FLAC or MP3).')
+        return
+      }
+
       /* SETUP */
       this.tracks.forEach(t => {
         t.albumTitle = this.albumTitle
@@ -133,8 +138,12 @@ const app = new Vue({
           }
         }
 
-        if (track)
-          this.encodeFLAC(track)
+        if (track){
+          if (this.opts.encodeFlac)
+            this.encodeFLAC(track)
+          else if (this.opts.encodeMp3)
+            this.encodeMP3(track)
+        }
       })
 
       this.cdparanoiaProc.on('close', (code) => {
@@ -197,12 +206,17 @@ const app = new Vue({
 
         // Don't start a new process if operations have been cancelled.
         // Otherwise mp3-encode a track once it's been encoded to flac
-        if (this.ripping)
+        if (this.ripping && this.opts.encodeMp3)
           this.encodeMP3(track)
 
         // check if all tracks are encoded
         const trackList = this.opts.singleTrack ? [track] : this.tracks
         if (trackList.every(t => t.status.flac != -1)){
+          if (!this.opts.encodeMp3){
+            // if no encoding to mp3, notify end process and clean files here
+            this.ripping = false
+            this.clearTemp()
+          }
           const summary = trackList.map(t => `track ${t.id} done with exit code ${t.status.flac}`).join('\n')
           const final = trackList.every(t => t.status.flac == 0) ? '\nSuccess, all tracks OK\n' : ''
           this.$refs['log-flac'].push('***********************\n' + summary + final, true)
