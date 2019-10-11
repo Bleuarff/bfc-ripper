@@ -189,7 +189,7 @@ const app = new Vue({
         this.$refs['log-flac'].push(`flac exited with code ${code}.`, true)
 
         if (code != 0 && this.stopOnError){ // stop everything
-          this.cancel()
+          this.cancel(true)
           return
         }
 
@@ -246,7 +246,7 @@ const app = new Vue({
         this.$refs['log-lame'].push(`lame exited with code ${code}.`, true)
 
         if (code != 0 && this.stopOnError){ // stop everything
-          this.cancel()
+          this.cancel(true)
           return
         }
 
@@ -257,23 +257,25 @@ const app = new Vue({
           const summary = trackList.map(t => `track ${t.id} done with exit code ${t.status.mp3}`).join('\n')
           const final = trackList.every(t => t.status.mp3 == 0) ? '\nSuccess, all tracks OK\n' : ''
           this.$refs['log-lame'].push('***********************\n' + summary + final, true)
+          this.clearTemp()
         }
       })
     },
 
     // cancel rip. kill child proc.
     // No need to kill encoding processes, they're quick enough.
-    cancel: function(){
+    cancel: function(isError = false){
       this.cdparanoiaProc.kill('SIGTERM')
       this.ripping = false
-      const msg = '*** CANCEL RIP ***'
+      const msg = isError == true ? '*** RIP ERROR ***' : '*** CANCEL RIP ***'
       this.$refs['log-lame'].push(msg)
       this.$refs['log-flac'].push(msg)
       this.$refs['log-paranoia'].push(msg)
+      this.clearTemp()
     },
 
     // delete temp (wav) folder
-    clear: function(){
+    clearTemp: function(){
       if (!this.tmpdir) return
 
       const rimraf = require('rimraf')
