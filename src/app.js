@@ -22,6 +22,7 @@ const app = new Vue({
     discNumber: '01',
     runtime: '',
     ripping: false,
+    drivePresent: false,
 
     cdparanoiaProc: null,
     config: null,
@@ -36,13 +37,25 @@ const app = new Vue({
     }
   },
   mounted: async function(){
-    this.start()
+    await this.watchDrive()
     this.loadConfig()
+
+    // check drive state regularly to look for new CDs
+    setInterval(this.watchDrive, 5000)
   },
   watch: {
     albumArtist: function(val){
       // when album artist is edited, all tracks inherit it
       this.tracks.forEach(x => {x.artist = val})
+    },
+    // drive state changes: refresh/clear tracklist
+    drivePresent: function(val){
+      if (val)
+        this.refresh()
+      else{
+        this.tracks = []
+        this.runtime = ''
+      }
     }
   },
   computed: {
@@ -58,8 +71,8 @@ const app = new Vue({
     }
   },
   methods: {
-    // start: refresh TOC
-    start: async function(){
+    // refresh TOC
+    refresh: async function(){
       const toc = await this.getTOC()
       this.tracks = toc.tracks
       this.runtime = toc.runtime
@@ -402,6 +415,16 @@ const app = new Vue({
       catch(ex){
         alert('Error loading config file.')
       }
+    },
+
+    // Checks if there's a cd in drive and changes state prop accordingly.
+    watchDrive: function(){
+      return new Promise(resolve => {
+        exec('setcd -i', (err, stdout, stderr) => {
+          this.drivePresent = stdout.indexOf('Disc found in drive') > -1
+          resolve()
+        })
+      })
     }
   }
 })
