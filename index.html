@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval';" />
     <title>BFC Ripper</title>
-    <script src='lib/vue.js'></script>
-    <script src='src/utils.js'></script>
-    <script src='src/track.js'></script>
-    <script src='src/bfc-log.js'></script>
-    <script src='src/undiacritics.js'></script>
+    <script src="lib/vue.js"></script>
+    <script src="src/utils.js"></script>
+    <script src="src/track.js"></script>
+    <script src="src/bfc-log.js"></script>
+    <script src="src/undiacritics.js"></script>
+    <script src="src/bfc-status.js"></script>
     <link rel="stylesheet" href="style/style.css">
   </head>
   <body>
@@ -70,7 +71,11 @@
         <tbody id="tbody">
           <tr v-for="tk in tracks">
             <td>{{tk.id}}</td>
-            <td><span class="status">{{tk.status.rip}}&nbsp;{{tk.status.flac}}&nbsp;{{tk.status.mp3}}</span></td>
+            <td>
+              <bfc-status :status="tk.status.rip"></bfc-status>
+              <bfc-status :status="tk.status.flac"></bfc-status>
+              <bfc-status :status="tk.status.mp3"></bfc-status>
+            </td>
             <td>
               <input type="text" v-model="tk.artist" class="trackArtist" v-on:keydown.enter.up.down="moveFocus" placeholder="track artist" :disabled="ripping">
             </td>

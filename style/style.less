@@ -109,6 +109,10 @@ body{
   border-collapse: collapse;
   text-align: center;
 
+  td:nth-child(2){
+    width: 4.7em;
+    padding: 0 1px;
+  }
   td:nth-child(5),
   td:nth-child(6){
     width: 5.5em;
@@ -191,5 +195,43 @@ h2{
     min-width: 470px;
     font-size: .9em;
     margin-right: 1em;
+  }
+}
+
+.bfc-status{
+  height: 21px;
+  width: 21px;
+  display: inline-block;
+  position: relative;
+  top: 2px;
+
+  .bg{
+    width: 21px;
+    height: 21px;
+    position: absolute;
+    display: inline-block;
+    border-radius: 50%;
+    left: 0;
+    top: 0;
+    opacity: .5;
+  }
+  .inprogress {
+    background: #1a71ff;
+    &::after{
+      content: '';
+      display: inline-block;
+      width: 2px;
+      height: 21px;
+      background: white;
+      animation: 2s infinite linear circle;
+    }
+  }
+  .waiting {background: none;}
+  .done {background: #3be00b;}
+  .error {background: red;}
+
+  @keyframes circle{
+    0% {transform: rotate(0deg);}
+    100% {transform: rotate(359deg);}
   }
 }
