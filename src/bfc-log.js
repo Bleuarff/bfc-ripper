@@ -25,6 +25,10 @@ Vue.component('bfc-log', {
         data += '\n'
 
       this.content += data
+    },
+
+    clear: function(){
+      this.content = ''
     }
   },
   template: `

@@ -76,6 +76,7 @@ const app = new Vue({
       const toc = await this.getTOC()
       this.tracks = toc.tracks
       this.runtime = toc.runtime
+      ;['paranoia', 'flac', 'lame'].forEach(x => this.$refs['log-' + x].clear()) // clear all logs
     },
 
     rip: async function(){
@@ -119,29 +120,44 @@ const app = new Vue({
       /* Start ripping process */
 
       this.ripping = true
+      ;['paranoia', 'flac', 'lame'].forEach(x => this.$refs['log-' + x].clear()) // clear all logs
       console.log('cdparanoia ' + args.join(' '))
       const start = Date.now()
+
       this.cdparanoiaProc = spawn('cdparanoia', args, {cwd: this.tmpdir})
 
       // cdparanoia outputs everything on stderr, no need to listen to stdout
       this.cdparanoiaProc.stderr.on('data', (data) => {
+        if (typeof data !== 'string')
+          data = data.toString()
+
         this.$refs['log-paranoia'].push(data)
 
         let track
 
         // detect a track is done when cdparanoia announces it starts a new track...
-        const match = /outputting to track(?<tn>\d+)/.exec(data)
+        const match = /outputting to (?<nst>track(?<tn>\d+)\.)?cdda\.wav/.exec(data)
         if (match){
-          const tn = parseInt(match.groups.tn, 10) - 1 // get previous track number
-          if (tn > 0)
-            track = this.tracks.find(x => x.id === tn)
+          const newTrackId = parseInt(match.groups.tn, 10), // get id of track being encoded
+                prevTrackId = newTrackId - 1 // and previous track id
+
+          if (newTrackId > 0){
+            const newTrack = this.tracks.find(x => x.id === newTrackId)
+            if (newTrack)
+              newTrack.status.rip = IN_PROGRESS
+          }
+          else if (this.opts.singleTrack)
+            this.tracks[0].status.rip = IN_PROGRESS
+
+          if (prevTrackId > 0)
+            track = this.tracks.find(x => x.id === prevTrackId)
         }
         // ...or when it's done.
         else if (data.indexOf('Done.') > -1){
           if (!this.opts.singleTrack)
             track = this.tracks[this.tracks.length - 1]
           else{
-            track = new Track({id: 1}, true)
+            this.tracks[0] = track = new Track({id: 1}, true)
             track.artist = this.albumArtist
             track.title = track.albumTitle = this.albumTitle
             track.year = this.releaseYear
@@ -152,6 +168,7 @@ const app = new Vue({
         }
 
         if (track){
+          track.status.rip = 0
           if (this.opts.encodeFlac)
             this.encodeFLAC(track)
           else if (this.opts.encodeMp3)
@@ -181,6 +198,7 @@ const app = new Vue({
     encodeFLAC: function(track){
       if (!track) throw new Error('Track object is null')
 
+      track.status.flac = IN_PROGRESS
       const inputFile = path.resolve(this.tmpdir, track.sourcename),
             outputFile = path.resolve(this.flacOutputDir, `${track.filename}.flac`)
 
@@ -240,6 +258,7 @@ const app = new Vue({
     encodeMP3: function(track){
       if (!track) throw new Error('Track object is null')
 
+      track.status.mp3 = IN_PROGRESS
       const inputFile = path.resolve(this.tmpdir, track.sourcename),
             outputFile = path.resolve(this.mp3OutputDir, `${track.filename}.mp3`)
 

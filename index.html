@@ -61,6 +61,7 @@
       <table id="tracks" v-if="tracks.length !== 0">
         <thead>
           <th>#</th>
+          <th></th>
           <th>Artist</th>
           <th>Title</th>
           <th>Length</th>
@@ -69,6 +70,7 @@
         <tbody id="tbody">
           <tr v-for="tk in tracks">
             <td>{{tk.id}}</td>
+            <td><span class="status">{{tk.status.rip}}&nbsp;{{tk.status.flac}}&nbsp;{{tk.status.mp3}}</span></td>
             <td>
               <input type="text" v-model="tk.artist" class="trackArtist" v-on:keydown.enter.up.down="moveFocus" placeholder="track artist" :disabled="ripping">
             </td>
@@ -78,7 +80,7 @@
             <td>{{tk.length}}</td>
             <td>{{tk.start}}</td>
           </tr>
-          <tr><td colspan="3"></td><td class="runtime">{{runtime}}</td></tr>
+          <tr><td colspan="4"></td><td class="runtime">{{runtime}}</td></tr>
         </tbody>
       </table>
       <div v-else class="nodisc">

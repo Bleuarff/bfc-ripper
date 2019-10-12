@@ -1,5 +1,7 @@
 'use strict'
 
+const IN_PROGRESS = 2222
+
 class Track{
   constructor(data, singleTrack = false){
     this.id = data.id
@@ -7,7 +9,7 @@ class Track{
     this.length = data.length
 
     this.artist = ''
-    // this.title = 'default #' + this.id
+    this.title = ''
     this.albumTitle = ''
     this.year = ''
     this.trackCount = 0
@@ -15,8 +17,11 @@ class Track{
     this._discNumber = '01'
     this.singleTrack = singleTrack
 
-    // -1: initial state, otherwise encoding process exit code
+    // -1: initial state,
+    // 2222: in progress,
+    // otherwise encoding process exit code
     this.status = {
+      rip: -1,
       flac: -1,
       mp3: -1
     }
