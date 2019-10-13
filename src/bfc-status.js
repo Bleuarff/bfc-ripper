@@ -27,7 +27,7 @@ Vue.component('bfc-status', {
   },
   template: `
   <div class="bfc-status">
-    <img src="./img/icon.png" width="21" height="21">
+    <img src="./img/status.png" width="21" height="21">
     <span class="bg" :class="[statusClass, {ripping: ripping}]"></span>
   </div>
   `
