@@ -223,15 +223,18 @@ h2{
       width: 2px;
       height: 21px;
       background: white;
-      animation: 2s infinite linear circle;
+      transform: rotate(35deg);
     }
+  }
+  .ripping::after{
+    animation: 2s infinite linear circle;
   }
   .waiting {background: none;}
   .done {background: #3be00b;}
   .error {background: red;}
 
   @keyframes circle{
-    0% {transform: rotate(0deg);}
-    100% {transform: rotate(359deg);}
+    0% {transform: rotate(36deg);}
+    100% {transform: rotate(395deg);}
   }
 }

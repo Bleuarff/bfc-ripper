@@ -2,7 +2,8 @@
 
 Vue.component('bfc-status', {
   props: {
-    status: {type: Number, required: true}
+    status: {type: Number, required: true},
+    ripping: {type: Boolean, required: true} // whether global ripping process is running
   },
   computed: {
     // return class value based on status
@@ -27,7 +28,7 @@ Vue.component('bfc-status', {
   template: `
   <div class="bfc-status">
     <img src="./img/icon.png" width="21" height="21">
-    <span class="bg" :class=statusClass></span>
+    <span class="bg" :class="[statusClass, {ripping: ripping}]"></span>
   </div>
   `
 })

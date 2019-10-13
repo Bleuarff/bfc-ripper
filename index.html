@@ -72,9 +72,9 @@
           <tr v-for="tk in tracks">
             <td>{{tk.id}}</td>
             <td>
-              <bfc-status :status="tk.status.rip"></bfc-status>
-              <bfc-status :status="tk.status.flac"></bfc-status>
-              <bfc-status :status="tk.status.mp3"></bfc-status>
+              <bfc-status :status="tk.status.rip" :ripping="ripping"></bfc-status>
+              <bfc-status :status="tk.status.flac" :ripping="ripping"></bfc-status>
+              <bfc-status :status="tk.status.mp3" :ripping="ripping"></bfc-status>
             </td>
             <td>
               <input type="text" v-model="tk.artist" class="trackArtist" v-on:keydown.enter.up.down="moveFocus" placeholder="track artist" :disabled="ripping">

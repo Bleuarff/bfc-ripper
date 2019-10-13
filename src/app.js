@@ -21,7 +21,7 @@ const app = new Vue({
     imageSize: 0,
     discNumber: '01',
     runtime: '',
-    ripping: false,
+    ripping: false, // whether process is running
     drivePresent: false,
 
     cdparanoiaProc: null,
