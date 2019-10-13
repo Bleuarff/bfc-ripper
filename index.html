@@ -97,10 +97,19 @@
 
         <button id="cancel" class="btn" v-on:click="cancel" v-show="ripping">Cancel</button>
 
-        <div class="config-outputs" v-if="config">
-          <div>FLAC: {{config.FLAC.directory}}</div>
-          <div>MP3: {{config.MP3.directory}}</div>
-          <button v-on:click="loadConfig">Reload config</button>
+        <div class="config-outputs">
+          <div>
+            <label>FLAC:</label>
+            <input type="text" :disabled="ripping" v-model="config.flacBasePath">
+            <button v-on:click="$event.currentTarget.nextElementSibling.click()">Change</button>
+            <input type="file" webkitdirectory class="hidden" v-on:change="selectOutputDir($event, 'flac')">
+          </div>
+          <div>
+            <label>MP3:</label>
+            <input type="text" :disabled="ripping" v-model="config.mp3BasePath">
+            <button v-on:click="$event.currentTarget.nextElementSibling.click()">Change</button>
+            <input type="file" webkitdirectory class="hidden" v-on:change="selectOutputDir($event, 'mp3')">
+          </div>
         </div>
       </div>
 

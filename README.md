@@ -2,6 +2,12 @@
 
 A simple CD ripper & encoder GUI, tailored exactly to how I encode my music.
 
+# Usage
+
+````shell
+npm start
+````
+
 ## Dependencies
 These tools are not included and must be installed separately. They've been tested against the specified version. Since this software relies on parsing their outputs, there's no guarantee it will work with another version.
 

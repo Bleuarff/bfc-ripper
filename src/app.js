@@ -3,10 +3,7 @@
 const fsp = require('fs').promises,
       { spawn, exec } = require('child_process'),
       path = require('path'),
-      os = require('os'),
-      { safeLoad } = require('js-yaml')
-
-
+      os = require('os')
 
 const app = new Vue({
   el: '#app',
@@ -25,9 +22,11 @@ const app = new Vue({
     drivePresent: false,
 
     cdparanoiaProc: null,
-    config: null,
     tmpdir: '',
-
+    config: {
+      flacBasePath: '',
+      mp3BasePath: ''
+    },
     // rip options
     opts: {
       encodeFlac: true,
@@ -199,6 +198,9 @@ const app = new Vue({
         if (this.tracks.some(t => !t[field]))
           throw new Error(`Missing field: ${field}`)
       })
+
+      if (!this.config.flacBasePath || !this.config.mp3BasePath)
+        throw new Error('Missing output paths')
     },
 
     encodeFLAC: function(track){
@@ -433,13 +435,9 @@ const app = new Vue({
     },
 
     loadConfig: async function(){
-      try{
-        const conf = await fsp.readFile('./config.yml', 'utf8')
-        this.config = safeLoad(conf)
-      }
-      catch(ex){
-        alert('Error loading config file.')
-      }
+      const conf = localStorage.getItem('config')
+      if (conf)
+        this.config = JSON.parse(conf)
     },
 
     // Checks if there's a cd in drive and changes state prop accordingly.
@@ -450,6 +448,20 @@ const app = new Vue({
           resolve()
         })
       })
+    },
+
+    // sets flac or mp3 base directory & update localstorage config
+    selectOutputDir: function(e, type){
+      if (!e.currentTarget.files.length)
+        return
+
+      const path = e.currentTarget.files[0].path
+      if (type === 'flac')
+        this.config.flacBasePath = path
+      else if (type ==='mp3')
+        this.config.mp3BasePath = path
+
+      localStorage.setItem('config', JSON.stringify(this.config))
     }
   }
 })
