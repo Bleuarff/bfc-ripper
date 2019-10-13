@@ -102,25 +102,31 @@ const app = new Vue({
         return
       }
 
+      this.tmpdir = path.resolve(os.tmpdir(), 'bfcrip-' + Date.now().toString())
+
+      try{
+        // create temp dir for wav & flac output dir
+        const ps = await Promise.all([
+          fsp.mkdir(this.tmpdir),
+          Utils.mkdirp(this.flacOutputDir),
+          Utils.mkdirp(this.mp3OutputDir),
+        ])
+      }
+      catch(ex){
+        console.error(ex)
+        alert('Error creating output directories')
+        return
+      }
+
+      /* Start ripping process */
+      this.ripping = true
+      ;['paranoia', 'flac', 'lame'].forEach(x => this.$refs['log-' + x].clear()) // clear all logs
+
       const args = [ // cdparanoia arguments
         '--output-wav',
         '--verbose',
         this.opts.singleTrack ? `"1-${this.tracks.length}"`: '--batch' // test mode: rip first track only
       ]
-
-      this.tmpdir = path.resolve(os.tmpdir(), 'bfcrip-' + Date.now().toString())
-
-      // create temp dir for wav & flac output dir
-      const ps = await Promise.all([
-        fsp.mkdir(this.tmpdir),
-        Utils.mkdirp(this.flacOutputDir),
-        Utils.mkdirp(this.mp3OutputDir),
-      ])
-
-      /* Start ripping process */
-
-      this.ripping = true
-      ;['paranoia', 'flac', 'lame'].forEach(x => this.$refs['log-' + x].clear()) // clear all logs
       console.log('cdparanoia ' + args.join(' '))
       const start = Date.now()
 
