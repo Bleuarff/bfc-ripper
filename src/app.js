@@ -63,10 +63,10 @@ const app = new Vue({
       return Utils.normalize(`${this.albumArtist} - ${this.albumTitle}${year}`)
     },
     flacOutputDir: function(){
-      return path.resolve(this.config.FLAC.directory, this.folderName)
+      return path.resolve(this.config.flacBasePath, this.folderName)
     },
     mp3OutputDir: function(){
-      return path.resolve(this.config.MP3.directory, this.folderName)
+      return path.resolve(this.config.mp3BasePath, this.folderName)
     }
   },
   methods: {
