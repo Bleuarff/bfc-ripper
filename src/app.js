@@ -3,7 +3,8 @@
 const fsp = require('fs').promises,
       { spawn, exec } = require('child_process'),
       path = require('path'),
-      os = require('os')
+      os = require('os'),
+      rimraf = require('rimraf')
 
 const app = new Vue({
   el: '#app',
@@ -334,8 +335,8 @@ const app = new Vue({
     clearTemp: function(){
       if (!this.tmpdir) return
 
-      const rimraf = require('rimraf')
-      rimraf(this.tmpdir, err => {
+      rimraf(this.tmpdir)
+      .then(err => {
         if (err) console.error(`Error deleting temp folder ${this.tmpdir}`)
       })
     },
