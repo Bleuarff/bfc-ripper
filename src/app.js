@@ -4,7 +4,8 @@ const fsp = require('fs').promises,
       { spawn, exec } = require('child_process'),
       path = require('path'),
       os = require('os'),
-      rimraf = require('rimraf')
+      rimraf = require('rimraf'),
+      mkdirp = require('mkdirp')
 
 const app = new Vue({
   el: '#app',
@@ -108,8 +109,8 @@ const app = new Vue({
         // create temp dir for wav & flac output dir
         const ps = await Promise.all([
           fsp.mkdir(this.tmpdir),
-          Utils.mkdirp(this.flacOutputDir),
-          Utils.mkdirp(this.mp3OutputDir),
+          mkdirp(this.flacOutputDir),
+          mkdirp(this.mp3OutputDir),
         ])
       }
       catch(ex){
@@ -407,7 +408,7 @@ const app = new Vue({
       target.trackCount = this.tracks.length
       // this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
 
-      await Utils.mkdirp(this.flacOutputDir),
+      await mkdirp(this.flacOutputDir),
       this.encodeFLAC(target)
     },
 
@@ -421,7 +422,7 @@ const app = new Vue({
       target.trackCount = this.tracks.length
       // this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
 
-      await Utils.mkdirp(this.mp3OutputDir)
+      await mkdirp(this.mp3OutputDir)
       this.encodeMP3(target)
     },
 
