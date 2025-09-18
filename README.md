@@ -2,6 +2,12 @@
 
 A simple CD ripper & encoder GUI, tailored exactly to how I encode my music.
 
+## Install
+
+```shell
+npm i
+gulp
+```
 ## Usage
 
 ````shell
