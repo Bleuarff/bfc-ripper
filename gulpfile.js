@@ -1,20 +1,10 @@
 'use strict'
 
-const gulp = require('gulp'),
-      watch = require('gulp-watch'),
-      less = require('gulp-less')
+const gulp = require('gulp')
 
-function defaultTask(cb){
-  cb()
+function copyLibs(){
+  return gulp.src(['node_modules/less/dist/less.js'])
+  .pipe(gulp.dest('lib/'))
 }
 
-function makeStyle(cb){
-  return gulp.src(['style/*.less'])
-  .pipe(less())
-  .pipe(gulp.dest('style/'))
-}
-
-gulp.watch(['style/*.less'], makeStyle)
-
-exports.makeStyle = makeStyle
-exports.default = gulp.series(makeStyle)
+exports.default = gulp.series(copyLibs)
