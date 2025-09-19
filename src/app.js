@@ -4,8 +4,8 @@ const fsp = require('fs').promises,
       { spawn, exec } = require('child_process'),
       path = require('path'),
       os = require('os'),
-      rimraf = require('rimraf'),
-      mkdirp = require('mkdirp')
+      { rimraf } = require('rimraf'),
+      { mkdirp } = require('mkdirp')
 
 const app = new Vue({
   el: '#app',
