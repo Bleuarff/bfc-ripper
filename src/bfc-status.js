@@ -1,6 +1,8 @@
 'use strict'
 
-Vue.component('bfc-status', {
+window.cpnts = window.cpnts || []
+
+window.cpnts.push(['bfc-status', {
   props: {
     status: {type: Number, required: true},
     ripping: {type: Boolean, required: true} // whether global ripping process is running
@@ -31,4 +33,4 @@ Vue.component('bfc-status', {
     <span class="bg" :class="[statusClass, {ripping: ripping}]"></span>
   </div>
   `
-})
+}])

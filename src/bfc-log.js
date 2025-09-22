@@ -1,6 +1,8 @@
 'use strict'
 
-Vue.component('bfc-log', {
+window.cpnts = window.cpnts || []
+
+window.cpnts.push(['bfc-log', {
   data: function(){
     return {
       content: ''
@@ -34,4 +36,4 @@ Vue.component('bfc-log', {
   template: `
     <textarea readonly class="bfc-log log">{{content}}</textarea>
   `
-})
+}])

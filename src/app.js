@@ -1,40 +1,41 @@
 'use strict'
 
-const fsp = require('fs').promises,
+const { mkdir } = require('fs').promises,
       { spawn, exec } = require('child_process'),
       path = require('path'),
       os = require('os'),
       { rimraf } = require('rimraf'),
       { mkdirp } = require('mkdirp')
 
-const app = new Vue({
-  el: '#app',
-  data: {
-    albumArtist: '',
-    albumTitle: '',
-    releaseYear: '',
-    genre: '',
-    tracks: [],
-    imagePath: '', // cover image filepath
-    imageUrl: '', // data url
-    imageSize: 0,
-    discNumber: '01',
-    runtime: '',
-    ripping: false, // whether process is running
-    drivePresent: false,
+const appDef = {
+  data: function(){
+    return {
+      albumArtist: '',
+      albumTitle: '',
+      releaseYear: '',
+      genre: '',
+      tracks: [],
+      imagePath: '', // cover image filepath
+      imageUrl: '', // data url
+      imageSize: 0,
+      discNumber: '01',
+      runtime: '',
+      ripping: false, // whether process is running
+      drivePresent: false,
 
-    cdparanoiaProc: null,
-    tmpdir: '',
-    config: {
-      flacBasePath: '',
-      mp3BasePath: ''
-    },
-    // rip options
-    opts: {
-      encodeFlac: true,
-      encodeMp3: true,
-      singleTrack: false,
-      stopOnError: true
+      cdparanoiaProc: null,
+      tmpdir: '',
+      config: {
+        flacBasePath: '',
+        mp3BasePath: ''
+      },
+      // rip options
+      opts: {
+        encodeFlac: true,
+        encodeMp3: true,
+        singleTrack: false,
+        stopOnError: true
+      }
     }
   },
   mounted: async function(){
@@ -108,7 +109,7 @@ const app = new Vue({
       try{
         // create temp dir for wav & flac output dir
         const ps = await Promise.all([
-          fsp.mkdir(this.tmpdir),
+          mkdir(this.tmpdir),
           mkdirp(this.flacOutputDir),
           mkdirp(this.mp3OutputDir),
         ])
@@ -466,4 +467,12 @@ const app = new Vue({
       localStorage.setItem('config', JSON.stringify(this.config))
     }
   }
-})
+}
+
+const app = Vue.createApp(appDef)
+
+for(const [name, def] of window.cpnts){
+  app.component(name, def)
+}
+
+app.mount('#app')
