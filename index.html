@@ -102,14 +102,12 @@
           <div>
             <label>FLAC:</label>
             <input type="text" :disabled="ripping" v-model="config.flacBasePath">
-            <button v-on:click="$event.currentTarget.nextElementSibling.click()">Change</button>
-            <input type="file" webkitdirectory class="hidden" v-on:change="selectOutputDir($event, 'flac')">
+            <button v-on:click="openDirDialog('flac')">Change</button>
           </div>
           <div>
             <label>MP3:</label>
             <input type="text" :disabled="ripping" v-model="config.mp3BasePath">
-            <button v-on:click="$event.currentTarget.nextElementSibling.click()">Change</button>
-            <input type="file" webkitdirectory class="hidden" v-on:change="selectOutputDir($event, 'mp3')">
+            <button v-on:click="openDirDialog('mp3')">Change</button>
           </div>
         </div>
       </div>

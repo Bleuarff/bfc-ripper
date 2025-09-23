@@ -1,7 +1,6 @@
 'use strict'
 
-// const electron = require('electron')
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, dialog, ipcMain } = require('electron')
 
 let win
 
@@ -44,5 +43,21 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
+  }
+})
+
+ipcMain.on('path:get', async (_, type) => {
+  try {
+    const result = await dialog.showOpenDialog({ properties: ['openDirectory'] })
+    
+    if (!result.canceled) {
+      win.webContents.send('path:selected', {
+        path: result.filePaths,
+        type,
+      })
+    }
+  }
+  catch(err){
+    console.error(err)
   }
 })

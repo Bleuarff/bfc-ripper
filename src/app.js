@@ -5,7 +5,8 @@ const { mkdir } = require('fs').promises,
       path = require('path'),
       os = require('os'),
       { rimraf } = require('rimraf'),
-      { mkdirp } = require('mkdirp')
+      { mkdirp } = require('mkdirp'),
+      { ipcRenderer } = require('electron')
 
 const appDef = {
   data: function(){
@@ -44,6 +45,10 @@ const appDef = {
 
     // check drive state regularly to look for new CDs
     setInterval(this.watchDrive, 5000)
+
+    ipcRenderer.on('path:selected', (_, {path, type}) => {
+      this.setOutputDir(path[0], type)
+    })
   },
   watch: {
     albumArtist: function(val){
@@ -453,19 +458,19 @@ const appDef = {
       })
     },
 
-    // sets flac or mp3 base directory & update localstorage config
-    selectOutputDir: function(e, type){
-      if (!e.currentTarget.files.length)
-        return
+    openDirDialog: function(type){
+      ipcRenderer.send('path:get', type)
+    },
 
-      const path = e.currentTarget.files[0].path
+    // sets flac or mp3 base directory & update localstorage config
+    setOutputDir: function(path, type){
       if (type === 'flac')
         this.config.flacBasePath = path
       else if (type ==='mp3')
         this.config.mp3BasePath = path
 
       localStorage.setItem('config', JSON.stringify(this.config))
-    }
+    },
   }
 }
 
