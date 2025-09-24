@@ -6,7 +6,8 @@ const { mkdir } = require('fs').promises,
       os = require('os'),
       { rimraf } = require('rimraf'),
       { mkdirp } = require('mkdirp'),
-      { ipcRenderer } = require('electron')
+      { ipcRenderer } = require('electron'),
+      { toRaw } = require('vue')
 
 const appDef = {
   data: function(){
@@ -329,7 +330,9 @@ const appDef = {
     // cancel rip. kill child proc.
     // No need to kill encoding processes, they're quick enough.
     cancel: function(isError = false){
-      this.cdparanoiaProc.kill('SIGTERM')
+      const proc = toRaw(this.cdparanoiaProc)
+      proc.kill('SIGTERM')
+      
       this.ripping = false
       const msg = isError == true ? '*** RIP ERROR ***' : '*** CANCEL RIP ***'
       this.$refs['log-lame'].push(msg)
@@ -339,13 +342,15 @@ const appDef = {
     },
 
     // delete temp (wav) folder
-    clearTemp: function(){
+    clearTemp: async function(){
       if (!this.tmpdir) return
 
-      rimraf(this.tmpdir)
-      .then(err => {
-        if (err) console.error(`Error deleting temp folder ${this.tmpdir}`)
-      })
+      try {
+        await rimraf(this.tmpdir)
+      }
+      catch(ex) {
+        console.error(`Error deleting temp folder ${this.tmpdir}`, err)
+      }
     },
 
     // returns object with 2 properties:
