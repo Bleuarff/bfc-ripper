@@ -274,6 +274,18 @@ h2{
   background:var(--bg-color);
   box-shadow: #3f3f3f 2px 2px 3px;
 
+  &.title :first-child{
+    margin-bottom: .5em;
+  }
+  &.list div:not(:first-child){
+    padding-left: .8em;
+
+    &:before{
+      content: '-';
+      padding-right: .4em;
+    }
+  }
+
   button {
     display: block;
     margin: 2em auto 0;

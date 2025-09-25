@@ -9,6 +9,14 @@ const { mkdir } = require('fs').promises,
       { ipcRenderer } = require('electron'),
       { toRaw } = require('vue')
 
+class ValidationError extends Error {
+  constructor(fields){
+    super()
+    this.message = 'Missing fields'
+    this.fields = fields
+  }
+}
+
 const appDef = {
   data: function(){
     return {
@@ -89,7 +97,7 @@ const appDef = {
 
     rip: async function(){
       if (!this.opts.encodeFlac && !this.opts.encodeMp3){
-        alert('Select at least one encoding option (FLAC or MP3).')
+        this.$refs.alert.show('Select at least one encoding option (FLAC or MP3).')
         return
       }
 
@@ -106,7 +114,7 @@ const appDef = {
         this.validate()
       }
       catch(ex){
-        this.$refs.alert.show(ex.message)
+        this.$refs.alert.show(`Missing field${ex.fields.length > 1 ? 's' : ''}:\n${ ex.fields.join('\n')}`, {title: true, list: true})
         return
       }
 
@@ -122,7 +130,7 @@ const appDef = {
       }
       catch(ex){
         console.error(ex)
-        alert('Error creating output directories')
+        this.$refs.alert.show('Error creating output directories')
         return
       }
 
@@ -203,13 +211,19 @@ const appDef = {
       if (!this.opts.singleTrack) // title field is mandatory if not ripping as single track
         mandatory.push('title')
 
+      const missing = []
+
       mandatory.forEach(field => {
         if (this.tracks.some(t => !t[field]))
-          throw new Error(`Missing field: ${field}`)
+          missing.push(field)
       })
 
       if (!this.config.flacBasePath || !this.config.mp3BasePath)
-        throw new Error('Missing output paths')
+        missing.push('output paths')
+
+      if (missing.length > 0){
+        throw new ValidationError(missing)
+      }
     },
 
     encodeFLAC: function(track){
