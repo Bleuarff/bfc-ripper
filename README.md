@@ -8,12 +8,15 @@ A simple CD ripper & encoder GUI, tailored exactly to how I encode my music.
 npm i
 gulp
 ```
-Then make sure `node_modules/electron/dist/chrome-sandbox` is owned by root and has mode 4755
+Then make sure `node_modules/electron/dist/chrome-sandbox` is owned by root and has mode 4755.
 ## Usage
 
 ````shell
 npm start
 ````
+
+![BFC-Ripper snapshot](./img/screenshot.jpg)
+
 
 ## Dependencies
 These tools are not included and must be installed separately. They've been tested against the specified version. Since this software relies on parsing their outputs, there's no guarantee it will work with another version.
