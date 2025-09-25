@@ -106,7 +106,7 @@ const appDef = {
         this.validate()
       }
       catch(ex){
-        alert(ex.message)
+        this.$refs.alert.show(ex.message)
         return
       }
 
