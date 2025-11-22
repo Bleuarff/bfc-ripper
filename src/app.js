@@ -6,7 +6,7 @@ const { mkdir } = require('fs').promises,
       os = require('os'),
       { rimraf } = require('rimraf'),
       { mkdirp } = require('mkdirp'),
-      { ipcRenderer } = require('electron'),
+      { ipcRenderer, webUtils } = require('electron'),
       { toRaw } = require('vue')
 
 class ValidationError extends Error {
@@ -456,7 +456,7 @@ const appDef = {
         return
 
       const file = e.currentTarget.files[0]
-      this.imagePath = file.path
+      this.imagePath = webUtils.getPathForFile(file)
       this.imageUrl = URL.createObjectURL(file)
       this.imageSize = (file.size / 1e3).toFixed(1)
     },
