@@ -10,7 +10,7 @@
   "author": "Bleuarff",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^38.1.0",
+    "electron": "^39.8.5",
     "gulp": "^5.0.1",
     "less": "^4.4.1"
   },
