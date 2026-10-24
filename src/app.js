@@ -1,11 +1,9 @@
 'use strict'
 
-const { mkdir } = require('fs').promises,
+const { mkdir, rm } = require('node:fs/promises'),
       { spawn, exec } = require('child_process'),
       path = require('path'),
       os = require('os'),
-      { rimraf } = require('rimraf'),
-      { mkdirp } = require('mkdirp'),
       { ipcRenderer, webUtils } = require('electron'),
       { toRaw } = require('vue')
 
@@ -124,8 +122,8 @@ const appDef = {
         // create temp dir for wav & flac output dir
         const ps = await Promise.all([
           mkdir(this.tmpdir),
-          mkdirp(this.flacOutputDir),
-          mkdirp(this.mp3OutputDir),
+          mkdir(this.flacOutputDir, { recursive: true }),
+          mkdir(this.mp3OutputDir, { recursive: true }),
         ])
       }
       catch(ex){
@@ -360,7 +358,7 @@ const appDef = {
       if (!this.tmpdir) return
 
       try {
-        await rimraf(this.tmpdir)
+        await rm(this.tmpdir, { recursive: true })
       }
       catch(ex) {
         console.error(`Error deleting temp folder ${this.tmpdir}`, err)
@@ -433,7 +431,7 @@ const appDef = {
       target.trackCount = this.tracks.length
       // this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
 
-      await mkdirp(this.flacOutputDir),
+      await mkdir(this.flacOutputDir, { recursive: true }),
       this.encodeFLAC(target)
     },
 
@@ -447,7 +445,7 @@ const appDef = {
       target.trackCount = this.tracks.length
       // this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
 
-      await mkdirp(this.mp3OutputDir)
+      await mkdir(this.mp3OutputDir, { recursive: true })
       this.encodeMP3(target)
     },
 
