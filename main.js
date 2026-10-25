@@ -1,6 +1,7 @@
 'use strict'
 
 const { app, BrowserWindow, dialog, ipcMain } = require('electron')
+const path = require('path')
 
 let win
 
@@ -12,7 +13,8 @@ function createWindow () {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-    }
+    },
+    icon: path.join(__dirname, 'img/logo-512.png'),
   })
 
   // and load the index.html of the app.
