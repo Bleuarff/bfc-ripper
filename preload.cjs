@@ -1,0 +1,8 @@
+const { contextBridge, ipcRenderer } = require('electron')
+
+contextBridge.exposeInMainWorld('bfc', {
+    setCD: () => ipcRenderer.invoke('set-cd'),
+    cdparanoia: () => ipcRenderer.invoke('cd-paranoia'),
+    mkdir: (filepath) => ipcRenderer.invoke('mkdir', filepath),
+    rm: (filepath) => ipcRenderer.invoke('rm', filepath),
+})

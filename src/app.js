@@ -1,11 +1,11 @@
 'use strict'
 
-const { mkdir, rm } = require('node:fs/promises'),
-      { spawn, exec } = require('child_process'),
-      path = require('path'),
-      os = require('os'),
-      { ipcRenderer, webUtils } = require('electron'),
-      { toRaw } = require('vue')
+// const { mkdir, rm } = require('node:fs/promises'),
+//       { spawn, exec } = require('child_process'),
+//       path = require('path'),
+//       os = require('os'),
+// const { ipcRenderer, webUtils } = require('electron')
+//       { toRaw } = require('vue')
 
 class ValidationError extends Error {
   constructor(fields){
@@ -53,9 +53,9 @@ const appDef = {
     // check drive state regularly to look for new CDs
     setInterval(this.watchDrive, 5000)
 
-    ipcRenderer.on('path:selected', (_, {path, type}) => {
-      this.setOutputDir(path[0], type)
-    })
+    // ipcRenderer.on('path:selected', (_, {path, type}) => {
+    //   this.setOutputDir(path[0], type)
+    // })
   },
   watch: {
     albumArtist: function(val){
@@ -368,28 +368,25 @@ const appDef = {
     // returns object with 2 properties:
     // tracks: array of Tracks with basic info,
     // runtime: (string) total cd runtime
-    getTOC: function(){
-      return new Promise((resolve, reject) => {
-        exec('cdparanoia -Q', (err, stdout, stderr) => {
-          const tracks = []
-          // parse response array to get track number, length and start
-          const rx = /(?<tn>\d+)\.\s*\d+\s*\[(?<length>[\d:\.]+)\]\s*\d+\s*\[(?<start>[\d:\.]+)\]/ig
+    getTOC: async function(){
+      const { stderr } = await window.bfc.cdparanoia()
+      const tracks = []
+      // parse response array to get track number, length and start
+      const rx = /(?<tn>\d+)\.\s*\d+\s*\[(?<length>[\d:\.]+)\]\s*\d+\s*\[(?<start>[\d:\.]+)\]/ig
 
-          let match
-          while(match = rx.exec(stderr)){
-            tracks.push(new Track({
-              id: parseInt(match.groups.tn, 10),
-              start: match.groups.start,
-              length: match.groups.length
-            }))
-          }
+      let match
+      while(match = rx.exec(stderr)){
+        tracks.push(new Track({
+          id: parseInt(match.groups.tn, 10),
+          start: match.groups.start,
+          length: match.groups.length
+        }))
+      }
 
-          // get total cd runtime
-          const rtm = /TOTAL\s*\d+\s*\[(?<rt>\d+:\d+\.\d+)\]/i.exec(stderr),
-                runtime = rtm ? rtm.groups.rt : ''
-          resolve({tracks: tracks, runtime: runtime})
-        })
-      })
+      // get total cd runtime
+      const rtm = /TOTAL\s*\d+\s*\[(?<rt>\d+:\d+\.\d+)\]/i.exec(stderr),
+            runtime = rtm ? rtm.groups.rt : ''
+      return { tracks: tracks, runtime: runtime }
     },
 
     // track edition: select next logical field upon certain keydown
@@ -466,13 +463,11 @@ const appDef = {
     },
 
     // Checks if there's a cd in drive and changes state prop accordingly.
-    watchDrive: function(){
-      return new Promise(resolve => {
-        exec('setcd -i', (err, stdout, stderr) => {
-          this.drivePresent = stdout.indexOf('Disc found in drive') > -1
-          resolve()
-        })
-      })
+    watchDrive: async function(){
+      const { stdout } = await window.bfc.setCD()
+
+      this.drivePresent = stdout.includes('Disc found in drive')
+      return
     },
 
     openDirDialog: function(type){

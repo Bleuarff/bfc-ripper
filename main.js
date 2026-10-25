@@ -2,6 +2,8 @@
 
 const { app, BrowserWindow, dialog, ipcMain } = require('electron')
 const path = require('path')
+const { mkdir, rm } = require('node:fs/promises')
+const { exec } = require('child_process')
 
 let win
 
@@ -11,8 +13,9 @@ function createWindow () {
     width: 1480,
     height: 990,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.cjs')
     },
     icon: path.join(__dirname, 'img/logo-512.png'),
   })
@@ -33,6 +36,11 @@ function createWindow () {
 }
 
 app.whenReady().then(() => {
+  ipcMain.handle('set-cd', setCd)
+  ipcMain.handle('cd-paranoia', cdParanoia)
+  ipcMain.handle('mkdir', (e, filepath) => mkdir(filepath, { recursive: true }))
+  ipcMain.handle('rm', (e, filepath) => rm(filepath, { recursive: true }))
+
   createWindow()
 
   app.on('activate', () => {
@@ -63,3 +71,19 @@ ipcMain.on('path:get', async (_, type) => {
     console.error(err)
   }
 })
+
+function setCd() {
+  return new Promise(resolve => {
+    exec('setcd -i', (err, stdout, stderr) => {
+      resolve({ err, stdout, stderr })
+    })
+  })
+}
+
+function cdParanoia() {
+  return new Promise(resolve => {
+     exec('cdparanoia -Q', (err, stdout, stderr) => {
+      resolve({ err, stdout, stderr })
+     })
+  })
+}
