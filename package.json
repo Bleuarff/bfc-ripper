@@ -10,9 +10,9 @@
   "author": "Bleuarff",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^38.1.0",
+    "electron": "^45.0.0",
     "gulp": "^5.0.1",
-    "less": "^4.4.1"
+    "less": "^4.9.1"
   },
   "dependencies": {
     "vue": "^3.5.21"
