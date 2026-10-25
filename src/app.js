@@ -446,12 +446,12 @@ const appDef = {
       this.encodeMP3(target)
     },
 
-    selectImage: function(e){
+    selectImage: async function(e){
       if (!e.currentTarget.files.length)
         return
 
       const file = e.currentTarget.files[0]
-      this.imagePath = webUtils.getPathForFile(file)
+      this.imagePath = await window.bfc.getPathForFile(file)
       this.imageUrl = URL.createObjectURL(file)
       this.imageSize = (file.size / 1e3).toFixed(1)
     },
