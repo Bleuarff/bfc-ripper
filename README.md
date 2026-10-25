@@ -6,7 +6,8 @@ A simple CD ripper & encoder GUI, tailored exactly to how I encode my music.
 
 ```shell
 npm i
-gulp
+chmod u+x install.sh
+./install.sh
 ```
 Then make sure `node_modules/electron/dist/chrome-sandbox` is owned by root and has mode 4755.
 ## Usage
