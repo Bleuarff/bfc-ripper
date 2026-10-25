@@ -53,9 +53,6 @@ const appDef = {
     // check drive state regularly to look for new CDs
     setInterval(this.watchDrive, 5000)
 
-    // ipcRenderer.on('path:selected', (_, {path, type}) => {
-    //   this.setOutputDir(path[0], type)
-    // })
   },
   watch: {
     albumArtist: function(val){
@@ -470,8 +467,11 @@ const appDef = {
       return
     },
 
-    openDirDialog: function(type){
-      ipcRenderer.send('path:get', type)
+    openDirDialog: async function(type){
+      const path = await window.bfc.getDirectory()
+
+      if (path)
+        this.setOutputDir(path, type)
     },
 
     // sets flac or mp3 base directory & update localstorage config

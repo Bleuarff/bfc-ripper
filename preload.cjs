@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer, webUtils } = require('electron')
+const { contextBridge, ipcRenderer, webUtils, dialog } = require('electron')
 
 contextBridge.exposeInMainWorld('bfc', {
     setCD: () => ipcRenderer.invoke('set-cd'),
@@ -6,4 +6,5 @@ contextBridge.exposeInMainWorld('bfc', {
     mkdir: (filepath) => ipcRenderer.invoke('mkdir', filepath),
     rm: (filepath) => ipcRenderer.invoke('rm', filepath),
     getPathForFile: (file) => webUtils.getPathForFile(file),
+    getDirectory: () => ipcRenderer.invoke('getDir'),
 })

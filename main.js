@@ -40,7 +40,7 @@ app.whenReady().then(() => {
   ipcMain.handle('cd-paranoia', cdParanoia)
   ipcMain.handle('mkdir', (e, filepath) => mkdir(filepath, { recursive: true }))
   ipcMain.handle('rm', (e, filepath) => rm(filepath, { recursive: true }))
-
+  ipcMain.handle('getDir', getDirectory)
   createWindow()
 
   app.on('activate', () => {
@@ -56,21 +56,18 @@ app.on('window-all-closed', () => {
   }
 })
 
-ipcMain.on('path:get', async (_, type) => {
+async function getDirectory() {
   try {
     const result = await dialog.showOpenDialog({ properties: ['openDirectory'] })
     
     if (!result.canceled) {
-      win.webContents.send('path:selected', {
-        path: result.filePaths,
-        type,
-      })
+      return result.filePaths?.[0]
     }
   }
   catch(err){
     console.error(err)
   }
-})
+}
 
 function setCd() {
   return new Promise(resolve => {
