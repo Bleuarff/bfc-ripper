@@ -3,9 +3,16 @@
 const { app, BrowserWindow, dialog, ipcMain } = require('electron')
 const path = require('path')
 const { mkdir, rm } = require('node:fs/promises')
-const { exec } = require('child_process')
+const { exec, spawn } = require('node:child_process')
+const { tmpdir } = require('node:os')
 
-let win
+let win // browser window
+let workDir // tmp directory for WAV extraction
+let paranoiaProc // cdParanoia extraction process
+
+const procs = new Map() // table for spawned processes
+
+let nextId = 1
 
 function createWindow () {
   // Create the browser window.
@@ -37,10 +44,17 @@ function createWindow () {
 
 app.whenReady().then(() => {
   ipcMain.handle('set-cd', setCd)
-  ipcMain.handle('cd-paranoia', cdParanoia)
+  ipcMain.handle('get-toc', getTOC)
   ipcMain.handle('mkdir', (e, filepath) => mkdir(filepath, { recursive: true }))
-  ipcMain.handle('rm', (e, filepath) => rm(filepath, { recursive: true }))
-  ipcMain.handle('getDir', getDirectory)
+  ipcMain.handle('rm-tmp-dir', rmTmpDir)
+  ipcMain.handle('getDir', selectDirectory)
+  ipcMain.handle('resolve', pathResolve)
+  ipcMain.handle('get-tmp-dir', getTmpDir)
+  ipcMain.handle('spawn-rip', spawnRip)
+  ipcMain.handle('kill-rip', killRip)
+  ipcMain.handle('spawn-flac', runFlac)
+  ipcMain.handle('spawn-lame', runLame)
+
   createWindow()
 
   app.on('activate', () => {
@@ -56,7 +70,88 @@ app.on('window-all-closed', () => {
   }
 })
 
-async function getDirectory() {
+function createSendFunction(sender, id){
+  return function(canal, ...args) {
+    if (!sender.isDestroyed())
+      sender.send(canal, id, ...args)
+  }
+}
+
+function spawnRip(event, args) {
+  console.debug('Start rip process:', ...args, workDir)
+
+  const sender = event.sender
+  const id = nextId++
+  const send = createSendFunction(sender, id)
+  
+  paranoiaProc = spawn('cdparanoia', args, {cwd: workDir})
+  
+  paranoiaProc.stderr.setEncoding('utf8')
+  paranoiaProc.stderr.on('data', chunk => send('rip:stderr', chunk))
+  paranoiaProc.on('error', err => send('rip:error', err.message))
+  paranoiaProc.on('close', (code, signal) => {
+    send('rip:close', code, signal)
+  })
+
+  return id
+}
+
+function runFlac(event, cmd){
+  console.debug('start flac', cmd)
+
+  const sender = event.sender
+  const id = nextId++
+  const send = createSendFunction(sender, id)
+  const proc =  spawn('flac ' + cmd, [], { shell: true })
+
+  proc.stdout.setEncoding('utf8')
+  proc.stderr.setEncoding('utf8')
+  proc.stdout.on('data', chunk => send('flac:data', chunk))
+  proc.stderr.on('data', chunk => send('flac:data', chunk))
+  proc.on('close', (code, signal) => {
+    send('flac:close', code, signal)
+  })
+
+  return id
+}
+
+function runLame(event, cmd) {
+  console.debug('start lame', cmd)
+
+  const sender = event.sender
+  const id = nextId++
+  const send = createSendFunction(sender, id)
+
+  const proc = spawn('lame ' + cmd, [], { shell: true })
+
+  proc.stdout.setEncoding('utf8')
+  proc.stderr.setEncoding('utf8')
+  proc.stdout.on('data', chunk => send('lame:data', chunk))
+  proc.stderr.on('data', chunk => send('lame:data', chunk))
+  proc.on('close', (code, signal) => {
+    send('lame:close', code, signal)
+  })
+
+  return id
+}
+
+function killRip(){
+  paranoiaProc?.kill('SIGTERM')
+}
+
+function getTmpDir() {
+  workDir = path.resolve(tmpdir(), 'bfcrip-' + Date.now().toString())
+  return workDir
+}
+
+function rmTmpDir() {
+  if (workDir)
+    return rm(workDir, { recursive: true })
+
+  return
+}
+
+async function selectDirectory() {
   try {
     const result = await dialog.showOpenDialog({ properties: ['openDirectory'] })
     
@@ -69,6 +164,10 @@ async function getDirectory() {
   }
 }
 
+function pathResolve(...args) {
+  return path.resolve(...args)
+}
+
 function setCd() {
   return new Promise(resolve => {
     exec('setcd -i', (err, stdout, stderr) => {
@@ -77,7 +176,8 @@ function setCd() {
   })
 }
 
-function cdParanoia() {
+function getTOC() {
+  console.debug('get TOC')
   return new Promise(resolve => {
      exec('cdparanoia -Q', (err, stdout, stderr) => {
       resolve({ err, stdout, stderr })

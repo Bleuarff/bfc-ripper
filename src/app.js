@@ -1,12 +1,5 @@
 'use strict'
 
-// const { mkdir, rm } = require('node:fs/promises'),
-//       { spawn, exec } = require('child_process'),
-//       path = require('path'),
-//       os = require('os'),
-// const { ipcRenderer, webUtils } = require('electron')
-//       { toRaw } = require('vue')
-
 class ValidationError extends Error {
   constructor(fields){
     super()
@@ -74,11 +67,11 @@ const appDef = {
       const year = this.releaseYear ? ` (${this.releaseYear})` : ''
       return Utils.normalize(`${this.albumArtist} - ${this.albumTitle}${year}`)
     },
-    flacOutputDir: function(){
-      return path.resolve(this.config.flacBasePath, this.folderName)
+    flacOutputDir: async function(){
+      return window.bfc.resolve(this.config.flacBasePath, this.folderName)
     },
-    mp3OutputDir: function(){
-      return path.resolve(this.config.mp3BasePath, this.folderName)
+    mp3OutputDir: async function(){
+      return window.bfc.resolve(this.config.mp3BasePath, this.folderName)
     }
   },
   methods: {
@@ -113,14 +106,14 @@ const appDef = {
         return
       }
 
-      this.tmpdir = path.resolve(os.tmpdir(), 'bfcrip-' + Date.now().toString())
+      this.tmpdir = await window.bfc.getTmpDir()
 
       try{
         // create temp dir for wav & flac output dir
         const ps = await Promise.all([
-          mkdir(this.tmpdir),
-          mkdir(this.flacOutputDir, { recursive: true }),
-          mkdir(this.mp3OutputDir, { recursive: true }),
+          bfc.mkdir(this.tmpdir),
+          bfc.mkdir(await this.flacOutputDir),
+          bfc.mkdir(await this.mp3OutputDir),
         ])
       }
       catch(ex){
@@ -141,10 +134,10 @@ const appDef = {
       console.log('cdparanoia ' + args.join(' '))
       const start = Date.now()
 
-      this.cdparanoiaProc = spawn('cdparanoia', args, {cwd: this.tmpdir})
+      const id = await bfc.spawnRip(args)
 
       // cdparanoia outputs everything on stderr, no need to listen to stdout
-      this.cdparanoiaProc.stderr.on('data', (data) => {
+      const offStderr = bfc.onStderr(id, data => {
         if (typeof data !== 'string')
           data = data.toString()
 
@@ -193,7 +186,11 @@ const appDef = {
         }
       })
 
-      this.cdparanoiaProc.on('close', (code) => {
+      bfc.onError(id, msg => {
+        console.error('ERROR', msg)
+      })
+
+      bfc.onClose(id, code => {
         this.$refs['log-paranoia'].push(`cdparanoia exited with code ${code}`)
         this.$refs['log-paranoia'].push(`\nRip time: ${Utils.parseTime(Date.now() - start)}`)
       })
@@ -221,15 +218,14 @@ const appDef = {
       }
     },
 
-    encodeFLAC: function(track){
+    encodeFLAC: async function(track){
       if (!track) throw new Error('Track object is null')
 
       track.status.flac = IN_PROGRESS
-      const inputFile = path.resolve(this.tmpdir, track.sourcename),
-            outputFile = path.resolve(this.flacOutputDir, `${track.filename}.flac`)
+      const inputFile = await window.bfc.resolve(this.tmpdir, track.sourcename),
+            outputFile = await window.bfc.resolve(await this.flacOutputDir, `${track.filename}.flac`)
 
       const cmd = [
-        'flac',
         '-3',
         `-T ARTIST="${track.artist}"`,
         `-T TITLE="${track.title}"`,
@@ -245,14 +241,14 @@ const appDef = {
       console.log(cmd)
 
       this.$refs['log-flac'].push(`${inputFile}\n→ ${outputFile}`)
-      const flacProc = spawn(cmd, [], {shell: true})
-      flacProc.stdout.on('data', data => {
+
+      const id = await bfc.spawnFlac(cmd)
+
+      bfc.onFlacData(id, data => {
         this.$refs['log-flac'].push(data)
       })
-      flacProc.stderr.on('data', data => {
-        this.$refs['log-flac'].push(data)
-      })
-      flacProc.on('close', (code) => {
+
+      bfc.onFlacClose(id, code => {
         track.status.flac = code
         this.$refs['log-flac'].push(`flac exited with code ${code}.`, true)
 
@@ -281,15 +277,14 @@ const appDef = {
       })
     },
 
-    encodeMP3: function(track){
+    encodeMP3: async function(track){
       if (!track) throw new Error('Track object is null')
 
       track.status.mp3 = IN_PROGRESS
-      const inputFile = path.resolve(this.tmpdir, track.sourcename),
-            outputFile = path.resolve(this.mp3OutputDir, `${track.filename}.mp3`)
+      const inputFile = await bfc.resolve(this.tmpdir, track.sourcename),
+            outputFile = await bfc.resolve(await this.mp3OutputDir, `${track.filename}.mp3`)
 
       const cmd = [
-        'lame',
         '-S',
         '-V2',
         '--noreplaygain',
@@ -308,14 +303,14 @@ const appDef = {
       console.log(cmd)
 
       this.$refs['log-lame'].push(`${inputFile}\n→ ${outputFile}`)
-      const mp3Proc = spawn(cmd, [], {shell: true})
-      mp3Proc.stdout.on('data', data => {
+
+      const id = await bfc.spawnLame(cmd)// spawn(cmd, [], {shell: true})
+
+      bfc.onLameData(id, data => {
         this.$refs['log-lame'].push(data)
       })
-      mp3Proc.stderr.on('data', data => {
-        this.$refs['log-lame'].push(data)
-      })
-      mp3Proc.on('close', (code) => {
+      
+      bfc.onLameClose(id, code => {
         track.status.mp3 = code
         this.$refs['log-lame'].push(`lame exited with code ${code}.`, true)
 
@@ -338,9 +333,8 @@ const appDef = {
 
     // cancel rip. kill child proc.
     // No need to kill encoding processes, they're quick enough.
-    cancel: function(isError = false){
-      const proc = toRaw(this.cdparanoiaProc)
-      proc.kill('SIGTERM')
+    cancel: async function(isError = false){
+      await bfc.killRip()
       
       this.ripping = false
       const msg = isError == true ? '*** RIP ERROR ***' : '*** CANCEL RIP ***'
@@ -355,7 +349,7 @@ const appDef = {
       if (!this.tmpdir) return
 
       try {
-        await rm(this.tmpdir, { recursive: true })
+        await bfc.rmTmp()
       }
       catch(ex) {
         console.error(`Error deleting temp folder ${this.tmpdir}`, err)
@@ -366,7 +360,7 @@ const appDef = {
     // tracks: array of Tracks with basic info,
     // runtime: (string) total cd runtime
     getTOC: async function(){
-      const { stderr } = await window.bfc.cdparanoia()
+      const { stderr } = await bfc.getTOC()
       const tracks = []
       // parse response array to get track number, length and start
       const rx = /(?<tn>\d+)\.\s*\d+\s*\[(?<length>[\d:\.]+)\]\s*\d+\s*\[(?<start>[\d:\.]+)\]/ig
@@ -425,7 +419,7 @@ const appDef = {
       target.trackCount = this.tracks.length
       // this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
 
-      await mkdir(this.flacOutputDir, { recursive: true }),
+      await bfc.mkdir(await this.flacOutputDir),
       this.encodeFLAC(target)
     },
 
@@ -439,7 +433,7 @@ const appDef = {
       target.trackCount = this.tracks.length
       // this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
 
-      await mkdir(this.mp3OutputDir, { recursive: true })
+      await bfc.mkdir(await this.mp3OutputDir)
       this.encodeMP3(target)
     },
 
@@ -468,10 +462,10 @@ const appDef = {
     },
 
     openDirDialog: async function(type){
-      const path = await window.bfc.getDirectory()
+      const dirPath = await window.bfc.getDirectory()
 
-      if (path)
-        this.setOutputDir(path, type)
+      if (dirPath)
+        this.setOutputDir(dirPath, type)
     },
 
     // sets flac or mp3 base directory & update localstorage config
