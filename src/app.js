@@ -225,24 +225,22 @@ const appDef = {
       const inputFile = await window.bfc.resolve(this.tmpdir, track.sourcename),
             outputFile = await window.bfc.resolve(await this.flacOutputDir, `${track.filename}.flac`)
 
-      const cmd = [
-        '-3',
-        `-T ARTIST="${track.artist}"`,
-        `-T TITLE="${track.title}"`,
-        `-T ALBUM="${track.albumTitle}"`,
-        `-T TRACKNUMBER="${track.pos}"`,
-        `-T DATE="${track.year}"`,
-        `-T GENRE="${this.genre}"`,
-        `-T DISCNUMBER="${track.discNumber}"`,
-        this.imagePath ? `--picture="${this.imagePath}"` : '',
-        `-o "${outputFile}"`,
-        `"${inputFile}"`
-      ].join(' ')
-      console.log(cmd)
+      const cmdParams = {
+        artist: track.artist,
+        title: track.title,
+        album: track.albumTitle,
+        pos: track.pos,
+        year: track.year,
+        genre: this.genre,
+        discNumber: track.discNumber,
+        imagePath: this.imagePath || null,
+        outputFile,
+        inputFile,
+      }
 
       this.$refs['log-flac'].push(`${inputFile}\n→ ${outputFile}`)
 
-      const id = await bfc.spawnFlac(cmd)
+      const id = await bfc.spawnFlac(cmdParams)
 
       bfc.onFlacData(id, data => {
         this.$refs['log-flac'].push(data)
@@ -284,27 +282,22 @@ const appDef = {
       const inputFile = await bfc.resolve(this.tmpdir, track.sourcename),
             outputFile = await bfc.resolve(await this.mp3OutputDir, `${track.filename}.mp3`)
 
-      const cmd = [
-        '-S',
-        '-V2',
-        '--noreplaygain',
-        '--add-id3v2',
-        `--tt "${track.title}"`,
-        `--ta "${track.artist}"`,
-        `--tl "${track.albumTitle}"`,
-        `--ty "${track.year}"`,
-        `--tn "${track.pos}"`,
-        `--tg "${track.genre}"`,
-        this.imagePath ? `--ti "${this.imagePath}"` : '',
-        `--tv "TPOS=${track.discNumber}"`,
-        `"${inputFile}"`,
-        `"${outputFile}"`
-      ].join(' ')
-      console.log(cmd)
+      const cmdParams = {
+        title: track.title,
+        artist: track.artist,
+        album: track.albumTitle,
+        year: track.year,
+        pos: track.pos,
+        genre: track.genre,
+        imagePath: this.imagePath || null,
+        discNumber: track.discNumber,
+        inputFile,
+        outputFile,
+      }
 
       this.$refs['log-lame'].push(`${inputFile}\n→ ${outputFile}`)
 
-      const id = await bfc.spawnLame(cmd)// spawn(cmd, [], {shell: true})
+      const id = await bfc.spawnLame(cmdParams)
 
       bfc.onLameData(id, data => {
         this.$refs['log-lame'].push(data)

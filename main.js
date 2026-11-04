@@ -96,13 +96,29 @@ function spawnRip(event, args) {
   return id
 }
 
-function runFlac(event, cmd){
-  console.debug('start flac', cmd)
+function runFlac(event, cmdArgs){
+
+  const cmd = [
+    'flac',
+    '-3',
+    `-T ARTIST="${cmdArgs.artist}"`,
+    `-T TITLE="${cmdArgs.title}"`,
+    `-T ALBUM="${cmdArgs.album}"`,
+    `-T DATE="${cmdArgs.year}"`,
+    `-T TRACKNUMBER="${cmdArgs.pos}"`,
+    `-T GENRE="${cmdArgs.genre}"`,
+    `-T DISCNUMBER="${cmdArgs.discNumber}"`,
+    cmdArgs.imagePath ? `--picture="${cmdArgs.imagePath}"` : '',
+    `-o "${cmdArgs.outputFile}"`,
+    `"${cmdArgs.inputFile}"`
+  ].join(' ')
+
+  console.debug(cmd)
 
   const sender = event.sender
   const id = nextId++
   const send = createSendFunction(sender, id)
-  const proc =  spawn('flac ' + cmd, [], { shell: true })
+  const proc =  spawn(cmd, [], { shell: true })
 
   proc.stdout.setEncoding('utf8')
   proc.stderr.setEncoding('utf8')
@@ -115,14 +131,32 @@ function runFlac(event, cmd){
   return id
 }
 
-function runLame(event, cmd) {
-  console.debug('start lame', cmd)
+function runLame(event, cmdArgs) {
+  const cmd = [
+    'lame',
+    '-S',
+    '-V2',
+    '--noreplaygain',
+    '--add-id3v2',
+    `--ta "${cmdArgs.artist}"`,
+    `--tt "${cmdArgs.title}"`,
+    `--tl "${cmdArgs.album}"`,
+    `--ty "${cmdArgs.year}"`,
+    `--tn "${cmdArgs.pos}"`,
+    `--tg "${cmdArgs.genre}"`,
+    `--tv "TPOS=${cmdArgs.discNumber}"`,
+    cmdArgs.imagePath ? `--ti "${cmdArgs.imagePath}"` : '',
+    `"${cmdArgs.inputFile}"`,
+    `"${cmdArgs.outputFile}"`
+  ].join(' ')
 
+  console.log(cmd)
+  
   const sender = event.sender
   const id = nextId++
   const send = createSendFunction(sender, id)
 
-  const proc = spawn('lame ' + cmd, [], { shell: true })
+  const proc = spawn(cmd, [], { shell: true })
 
   proc.stdout.setEncoding('utf8')
   proc.stderr.setEncoding('utf8')
