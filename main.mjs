@@ -1,5 +1,3 @@
-'use strict'
-
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import path  from 'path'
 import { mkdir, rm } from 'node:fs/promises'
