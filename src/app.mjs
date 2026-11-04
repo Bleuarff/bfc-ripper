@@ -3,6 +3,7 @@ import bfcStatus from './bfc-status.mjs'
 import bfcAlert from './bfc-alert.mjs'
 import bfcLog from './bfc-log.mjs'
 import { normalize, parseTime } from './utils.mjs'
+import {createApp} from '../lib/vue.esm-browser.prod.js'
 
 class ValidationError extends Error {
   constructor(fields){
@@ -477,7 +478,7 @@ const appDef = {
   }
 }
 
-const app = Vue.createApp(appDef)
+const app = createApp(appDef)
 
 app.component('bfc-status', bfcStatus)
 app.component('bfc-alert', bfcAlert)
