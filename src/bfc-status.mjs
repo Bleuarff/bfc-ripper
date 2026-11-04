@@ -1,8 +1,6 @@
-'use strict'
+import { IN_PROGRESS } from "./track.mjs"
 
-window.cpnts = window.cpnts || []
-
-window.cpnts.push(['bfc-status', {
+export default {
   props: {
     status: {type: Number, required: true},
     ripping: {type: Boolean, required: true} // whether global ripping process is running
@@ -33,4 +31,4 @@ window.cpnts.push(['bfc-status', {
     <span class="bg" :class="[statusClass, {ripping: ripping}]"></span>
   </div>
   `
-}])
+}

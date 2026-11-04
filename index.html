@@ -5,12 +5,7 @@
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval';" />
     <title>BFC Ripper</title>
     <script src="lib/vue.global.prod.js"></script>
-    <script src="src/utils.js"></script>
-    <script src="src/track.js"></script>
-    <script src="src/bfc-log.js"></script>
-    <script src="src/undiacritics.js"></script>
-    <script src="src/bfc-status.js"></script>
-    <script src="src/bfc-alert.js"></script>
+
     <link rel="stylesheet/less" type="text/css" href="style/style.less">
     <script src="lib/less.js"></script>
   </head>
@@ -122,6 +117,6 @@
 
       <bfc-alert ref="alert"></bfc-alert>
     </div>
-    <script src="src/app.js"></script>
+    <script type="module" src="src/app.mjs"></script>
   </body>
 </html>

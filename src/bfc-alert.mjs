@@ -1,9 +1,5 @@
-'use strict'
-
-window.cpnts = window.cpnts || []
-
 // Simple alert modal
-window.cpnts.push(['bfc-alert', {
+export default {
     data: function(){
         return {
             // input arg is split on line breaks
@@ -38,4 +34,4 @@ window.cpnts.push(['bfc-alert', {
         </div>
     </div>
     `
-}])
+}

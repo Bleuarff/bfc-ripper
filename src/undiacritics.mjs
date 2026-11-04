@@ -1,5 +1,3 @@
-'use strict'
-
 /*
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -122,4 +120,4 @@ class Undiacritics {
   }
 }
 
-window.undiacritics = new Undiacritics()
+export const undiacritics = new Undiacritics()

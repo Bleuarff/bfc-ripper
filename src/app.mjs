@@ -1,4 +1,8 @@
-'use strict'
+import { IN_PROGRESS, Track } from './track.mjs'
+import bfcStatus from './bfc-status.mjs'
+import bfcAlert from './bfc-alert.mjs'
+import bfcLog from './bfc-log.mjs'
+import { normalize, parseTime } from './utils.mjs'
 
 class ValidationError extends Error {
   constructor(fields){
@@ -65,7 +69,7 @@ const appDef = {
   computed: {
     folderName: function(){
       const year = this.releaseYear ? ` (${this.releaseYear})` : ''
-      return Utils.normalize(`${this.albumArtist} - ${this.albumTitle}${year}`)
+      return normalize(`${this.albumArtist} - ${this.albumTitle}${year}`)
     },
     flacOutputDir: async function(){
       return window.bfc.resolve(this.config.flacBasePath, this.folderName)
@@ -192,7 +196,7 @@ const appDef = {
 
       bfc.onClose(id, code => {
         this.$refs['log-paranoia'].push(`cdparanoia exited with code ${code}`)
-        this.$refs['log-paranoia'].push(`\nRip time: ${Utils.parseTime(Date.now() - start)}`)
+        this.$refs['log-paranoia'].push(`\nRip time: ${parseTime(Date.now() - start)}`)
       })
     },
 
@@ -475,8 +479,7 @@ const appDef = {
 
 const app = Vue.createApp(appDef)
 
-for(const [name, def] of window.cpnts){
-  app.component(name, def)
-}
-
+app.component('bfc-status', bfcStatus)
+app.component('bfc-alert', bfcAlert)
+app.component('bfc-log', bfcLog)
 app.mount('#app')

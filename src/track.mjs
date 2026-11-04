@@ -1,8 +1,8 @@
-'use strict'
+import { normalize } from "./utils.mjs"
+ 
+export const IN_PROGRESS = 2222
 
-const IN_PROGRESS = 2222
-
-class Track{
+export class Track{
   constructor(data, singleTrack = false){
     this.id = data.id
     this.start = data.start
@@ -32,7 +32,7 @@ class Track{
     let name = `${this.artist} - ${this.albumTitle}${year}`
     if (!this.singleTrack)
       name += ` - ${this.id.toString().padStart(2, '0')} - ${this.title}`
-    return Utils.normalize(name)
+    return normalize(name)
   }
 
   get sourcename(){

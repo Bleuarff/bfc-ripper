@@ -1,8 +1,4 @@
-'use strict'
-
-window.cpnts = window.cpnts || []
-
-window.cpnts.push(['bfc-log', {
+export default {
   data: function(){
     return {
       content: ''
@@ -36,4 +32,4 @@ window.cpnts.push(['bfc-log', {
   template: `
     <textarea readonly class="bfc-log log">{{content}}</textarea>
   `
-}])
+}
