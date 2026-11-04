@@ -1,10 +1,10 @@
 'use strict'
 
-const { app, BrowserWindow, dialog, ipcMain } = require('electron')
-const path = require('path')
-const { mkdir, rm } = require('node:fs/promises')
-const { exec, spawn } = require('node:child_process')
-const { tmpdir } = require('node:os')
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import path  from 'path'
+import { mkdir, rm } from 'node:fs/promises'
+import { exec, spawn } from 'node:child_process'
+import { tmpdir } from 'node:os'
 
 let win // browser window
 let workDir // tmp directory for WAV extraction
@@ -22,9 +22,9 @@ function createWindow () {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.cjs')
+      preload: path.join(import.meta.dirname, 'preload.cjs')
     },
-    icon: path.join(__dirname, 'img/logo-512.png'),
+    icon: path.join(import.meta.dirname, 'img/logo-512.png'),
   })
 
   // and load the index.html of the app.
