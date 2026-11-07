@@ -21,3 +21,12 @@ export function normalize(input){
   // replace a lot of special chars. Redondant with line above, but also handles non-diacritics special chars (e.g. ligatures)
   return undiacritics.removeAll(value)
 }
+
+
+// returns unique CD identifier based on content
+export async function getCDFingerprint(tracks) {
+  const hash = tracks?.map((trk, i) => `${i.toString()}_${trk.start}_${trk.length}`)
+    .join('/')
+
+  return hash || null
+}

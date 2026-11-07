@@ -2,7 +2,7 @@ import { IN_PROGRESS, Track } from './track.mjs'
 import bfcStatus from './bfc-status.mjs'
 import bfcAlert from './bfc-alert.mjs'
 import bfcLog from './bfc-log.mjs'
-import { normalize, parseTime } from './utils.mjs'
+import { normalize, parseTime, getCDFingerprint } from './utils.mjs'
 import {createApp} from '../lib/vue.esm-browser.prod.js'
 
 class ValidationError extends Error {
@@ -41,7 +41,9 @@ const appDef = {
         encodeMp3: true,
         singleTrack: false,
         stopOnError: true
-      }
+      },
+
+      history: [], // hash list
     }
   },
   mounted: async function(){
@@ -371,6 +373,10 @@ const appDef = {
           length: match.groups.length
         }))
       }
+
+      const fingerprint = await getCDFingerprint(tracks)
+      if (fingerprint)
+        this.history.push(fingerprint)
 
       // get total cd runtime
       const rtm = /TOTAL\s*\d+\s*\[(?<rt>\d+:\d+\.\d+)\]/i.exec(stderr),
