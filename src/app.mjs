@@ -88,6 +88,12 @@ const appDef = {
       this.tracks = toc.tracks
       this.runtime = toc.runtime
       ;['paranoia', 'flac', 'lame'].forEach(x => this.$refs['log-' + x].clear()) // clear all logs
+    
+      // if artist is set before the CD is loaded, the watcher does nothing.
+      // So we set artist on all tracks when CD loads.
+      // Only on first CD, if you insert a 2nd CD we don't want previous CD's artist to leak.
+      if (this.history.length === 1 && this.albumArtist)
+        this.tracks.forEach(t => t.artist = this.albumArtist)
     },
 
     rip: async function(){
