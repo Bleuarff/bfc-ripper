@@ -53,12 +53,11 @@ const appDef = {
     // check drive state regularly to look for new CDs
     setInterval(this.watchDrive, 5000)
 
-    bfc.onFlacData((id, data) => {
-      // console.debug('procid', id, data)
-      this.$refs['log-flac'].push(data)
-    })
-
+    bfc.onFlacData((_, data) => this.$refs['log-flac'].push(data))
     bfc.onFlacClose((id, code) => this.flacComplete(id, code))
+
+    bfc.onLameData((_, data) =>  this.$refs['log-lame'].push(data))
+    bfc.onLameClose((id, code) => this.lameComplete(id, code))
 
   },
   watch: {
@@ -264,12 +263,10 @@ const appDef = {
 
       this.$refs['log-flac'].push(`${inputFile}\n→ ${outputFile}`)
 
-      const id = await bfc.spawnFlac(cmdParams)
-      track.flacProcId = id
+      track.flacProcId = await bfc.spawnFlac(cmdParams)
     },
 
     flacComplete: function(id, code) {
-      console.debug('flac done', id, code)
       const track = this.tracks.find(t => t.flacProcId === id)
 
       if (!track)
@@ -325,31 +322,33 @@ const appDef = {
 
       this.$refs['log-lame'].push(`${inputFile}\n→ ${outputFile}`)
 
-      const id = await bfc.spawnLame(cmdParams)
+      track.lameProcId = await bfc.spawnLame(cmdParams)
+    },
 
-      bfc.onLameData(id, data => {
-        this.$refs['log-lame'].push(data)
-      })
-      
-      bfc.onLameClose(id, code => {
-        track.status.mp3 = code
-        this.$refs['log-lame'].push(`lame exited with code ${code}.`, true)
+    lameComplete: function(id, code) {
+      const track = this.tracks.find(t => t.lameProcId === id)
 
-        if (code != 0 && this.opts.stopOnError){ // stop everything
-          this.cancel(true)
-          return
-        }
+      if (!track)
+        throw new Error(`Cannot find track for Lame process id. [id=${id}]`)
 
-        // check if all tracks are encoded
-        const trackList = this.opts.singleTrack ? [track] : this.tracks
-        if (trackList.every(t => t.status.mp3 != -1)){
-          this.ripping = false
-          const summary = trackList.map(t => `track ${t.id} done with exit code ${t.status.mp3}`).join('\n')
-          const final = trackList.every(t => t.status.mp3 == 0) ? '\nSuccess, all tracks OK\n' : ''
-          this.$refs['log-lame'].push('***********************\n' + summary + final, true)
-          this.clearTemp()
-        }
-      })
+      track.status.mp3 = code
+      this.$refs['log-lame'].push(`lame exited with code ${code}.`, true)
+
+      if (code != 0 && this.opts.stopOnError){ // stop everything
+        this.cancel(true)
+        return
+      }
+
+      // check if all tracks are encoded
+      const trackList = this.opts.singleTrack ? [track] : this.tracks
+
+      if (trackList.every(t => t.status.mp3 != -1)){
+        this.ripping = false
+        const summary = trackList.map(t => `track ${t.id} done with exit code ${t.status.mp3}`).join('\n')
+        const final = trackList.every(t => t.status.mp3 == 0) ? '\nSuccess, all tracks OK\n' : ''
+        this.$refs['log-lame'].push('***********************\n' + summary + final, true)
+        this.clearTemp()
+      }
     },
 
     // cancel rip. kill child proc.

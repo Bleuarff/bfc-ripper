@@ -35,8 +35,8 @@ contextBridge.exposeInMainWorld('bfc', {
     onFlacClose: cb => on2('flac:close', cb),
 
     spawnLame: (cmd) => ipcRenderer.invoke('spawn-lame', cmd),
-    onLameData: (id, cb) => on('lame:data', id, cb),
-    onLameClose: (id, cb) => on('lame:close', id, cb),
+    onLameData: cb => on2('lame:data', cb),
+    onLameClose: cb => on2('lame:close', cb),
 
     onStderr: (id, cb) => on('rip:stderr', id, cb),
     onError: (id, cb) => on('rip:error', id, cb),
