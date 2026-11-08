@@ -176,9 +176,17 @@ function getTmpDir() {
   return workDir
 }
 
-function rmTmpDir() {
-  if (workDir)
-    return rm(workDir, { recursive: true })
+async function rmTmpDir() {
+  if (workDir) {
+
+    try {
+      await rm(workDir, { recursive: true })
+      workDir = ''
+    }
+    catch(ex) {
+      console.error(ex)
+    }
+  }
 
   return
 }
