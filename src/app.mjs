@@ -53,6 +53,49 @@ const appDef = {
     // check drive state regularly to look for new CDs
     setInterval(this.watchDrive, 5000)
 
+    bfc.onFlacData((id, data) => {
+      console.debug('procid', id, data)
+      this.$refs['log-flac'].push(data)
+    })
+
+    // bfc.onFlacClose(data => {
+    //   this.onFlacClose
+    // })
+    bfc.onFlacClose((id, code) => {
+      console.debug('flac done', id, code)
+      const track = this.tracks.find(t => t.flacProcId === id)
+
+      if (!track)
+        throw new Error(`Cannot find track for FLAC process id. [id=${id}]`)
+
+      track.status.flac = code
+      this.$refs['log-flac'].push(`flac exited with code ${code}.`, true)
+
+      if (code != 0 && this.opts.stopOnError){ // stop everything
+        this.cancel(true)
+        return
+      }
+
+      // Don't start a new process if operations have been cancelled.
+      // Otherwise mp3-encode a track once it's been encoded to flac
+      if (this.ripping && this.opts.encodeMp3)
+        this.encodeMP3(track)
+
+      // check if all tracks are encoded
+      const trackList = this.opts.singleTrack ? [track] : this.tracks
+
+      if (trackList.every(t => t.status.flac != -1)){
+        if (!this.opts.encodeMp3){
+          // if no encoding to mp3, notify end process and clean files here
+          this.ripping = false
+          this.clearTemp()
+        }
+        const summary = trackList.map(t => `track ${t.id} done with exit code ${t.status.flac}`).join('\n')
+        const final = trackList.every(t => t.status.flac == 0) ? '\nSuccess, all tracks OK\n' : ''
+        this.$refs['log-flac'].push('***********************\n' + summary + final, true)
+      }
+    })
+
   },
   watch: {
     albumArtist: function(val){
@@ -122,12 +165,16 @@ const appDef = {
       this.tmpdir = await window.bfc.getTmpDir()
 
       try{
-        // create temp dir for wav & flac output dir
-        const ps = await Promise.all([
-          bfc.mkdir(this.tmpdir),
-          bfc.mkdir(await this.flacOutputDir),
-          bfc.mkdir(await this.mp3OutputDir),
-        ])
+        // create temp directories for wav, and target directories for flac & mp3
+        const ps = [ bfc.mkdir(this.tmpdir) ]
+
+        if (this.encodeFLAC)
+          ps.push(bfc.mkdir(await this.flacOutputDir))
+
+        if (this.encodeMP3)
+          ps.push(bfc.mkdir(await this.mp3OutputDir))
+
+        await Promise.all(ps)
       }
       catch(ex){
         console.error(ex)
@@ -254,38 +301,39 @@ const appDef = {
       this.$refs['log-flac'].push(`${inputFile}\n→ ${outputFile}`)
 
       const id = await bfc.spawnFlac(cmdParams)
+      track.flacProcId = id
 
-      bfc.onFlacData(id, data => {
-        this.$refs['log-flac'].push(data)
-      })
+      // bfc.onFlacData(id, data => {
+      //   this.$refs['log-flac'].push(data)
+      // })
 
-      bfc.onFlacClose(id, code => {
-        track.status.flac = code
-        this.$refs['log-flac'].push(`flac exited with code ${code}.`, true)
+      // bfc.onFlacClose(id, code => {
+        // track.status.flac = code
+        // this.$refs['log-flac'].push(`flac exited with code ${code}.`, true)
 
-        if (code != 0 && this.opts.stopOnError){ // stop everything
-          this.cancel(true)
-          return
-        }
+        // if (code != 0 && this.opts.stopOnError){ // stop everything
+        //   this.cancel(true)
+        //   return
+        // }
 
-        // Don't start a new process if operations have been cancelled.
-        // Otherwise mp3-encode a track once it's been encoded to flac
-        if (this.ripping && this.opts.encodeMp3)
-          this.encodeMP3(track)
+        // // Don't start a new process if operations have been cancelled.
+        // // Otherwise mp3-encode a track once it's been encoded to flac
+        // if (this.ripping && this.opts.encodeMp3)
+        //   this.encodeMP3(track)
 
-        // check if all tracks are encoded
-        const trackList = this.opts.singleTrack ? [track] : this.tracks
-        if (trackList.every(t => t.status.flac != -1)){
-          if (!this.opts.encodeMp3){
-            // if no encoding to mp3, notify end process and clean files here
-            this.ripping = false
-            this.clearTemp()
-          }
-          const summary = trackList.map(t => `track ${t.id} done with exit code ${t.status.flac}`).join('\n')
-          const final = trackList.every(t => t.status.flac == 0) ? '\nSuccess, all tracks OK\n' : ''
-          this.$refs['log-flac'].push('***********************\n' + summary + final, true)
-        }
-      })
+        // // check if all tracks are encoded
+        // const trackList = this.opts.singleTrack ? [track] : this.tracks
+        // if (trackList.every(t => t.status.flac != -1)){
+        //   if (!this.opts.encodeMp3){
+        //     // if no encoding to mp3, notify end process and clean files here
+        //     this.ripping = false
+        //     this.clearTemp()
+        //   }
+        //   const summary = trackList.map(t => `track ${t.id} done with exit code ${t.status.flac}`).join('\n')
+        //   const final = trackList.every(t => t.status.flac == 0) ? '\nSuccess, all tracks OK\n' : ''
+        //   this.$refs['log-flac'].push('***********************\n' + summary + final, true)
+        // }
+      // })
     },
 
     encodeMP3: async function(track){

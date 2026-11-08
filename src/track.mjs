@@ -25,6 +25,10 @@ export class Track{
       flac: -1,
       mp3: -1
     }
+
+    // ids of processes that encode that track
+    this.flacProcId = -1
+    this.lameProcId = -1
   }
 
   get filename(){
