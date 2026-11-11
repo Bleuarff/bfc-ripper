@@ -1,12 +1,14 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, IpcMain, ipcMain, IpcMainInvokeEvent } from 'electron'
 import path  from 'path'
 import { mkdir, rm } from 'node:fs/promises'
-import { exec, spawn } from 'node:child_process'
+import { ChildProcessWithoutNullStreams, exec, spawn } from 'node:child_process'
 import { tmpdir } from 'node:os'
+import { EventEmitter } from 'node:stream'
+import { WebContents } from 'electron/main'
 
-let win // browser window
-let workDir // tmp directory for WAV extraction
-let paranoiaProc // cdParanoia extraction process
+let win: BrowserWindow|null // browser window
+let workDir: string // tmp directory for WAV extraction
+let paranoiaProc: ChildProcessWithoutNullStreams // cdParanoia extraction process
 
 const procs = new Map() // table for spawned processes
 
@@ -68,14 +70,14 @@ app.on('window-all-closed', () => {
   }
 })
 
-function createSendFunction(sender, id){
-  return function(canal, ...args) {
+function createSendFunction(sender: WebContents, id: Number) {
+  return function(canal: string, ...args: any[]) {
     if (!sender.isDestroyed())
       sender.send(canal, id, ...args)
   }
 }
 
-function spawnRip(event, args) {
+function spawnRip(event: IpcMainInvokeEvent, args: readonly string[]) {
   console.debug('Start rip process:', ...args, workDir)
 
   const sender = event.sender
@@ -94,7 +96,7 @@ function spawnRip(event, args) {
   return id
 }
 
-function runFlac(event, cmdArgs){
+function runFlac(event: IpcMainInvokeEvent, cmdArgs: any){
 
   const cmd = [
     'flac',
@@ -129,7 +131,7 @@ function runFlac(event, cmdArgs){
   return id
 }
 
-function runLame(event, cmdArgs) {
+function runLame(event: IpcMainInvokeEvent, cmdArgs: any) {
   const cmd = [
     'lame',
     '-S',
@@ -204,7 +206,7 @@ async function selectDirectory() {
   }
 }
 
-function pathResolve(...args) {
+function pathResolve(_: IpcMainInvokeEvent, ...args: string[]) {
   return path.resolve(...args)
 }
 
