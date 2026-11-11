@@ -3,8 +3,8 @@ import path  from 'path'
 import { mkdir, rm } from 'node:fs/promises'
 import { ChildProcessWithoutNullStreams, exec, spawn } from 'node:child_process'
 import { tmpdir } from 'node:os'
-import { EventEmitter } from 'node:stream'
 import { WebContents } from 'electron/main'
+import { EncodingProcessArgs } from './types/encodingProcessArgs.mjs'
 
 let win: BrowserWindow|null // browser window
 let workDir: string // tmp directory for WAV extraction
@@ -96,7 +96,7 @@ function spawnRip(event: IpcMainInvokeEvent, args: readonly string[]) {
   return id
 }
 
-function runFlac(event: IpcMainInvokeEvent, cmdArgs: any){
+function runFlac(event: IpcMainInvokeEvent, cmdArgs: EncodingProcessArgs){
 
   const cmd = [
     'flac',
@@ -131,7 +131,7 @@ function runFlac(event: IpcMainInvokeEvent, cmdArgs: any){
   return id
 }
 
-function runLame(event: IpcMainInvokeEvent, cmdArgs: any) {
+function runLame(event: IpcMainInvokeEvent, cmdArgs: EncodingProcessArgs) {
   const cmd = [
     'lame',
     '-S',
