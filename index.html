@@ -2,10 +2,18 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval';" />
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'nonce-totallysecurenonce';" />
     <title>BFC Ripper</title>
 
     <link rel="stylesheet/less" type="text/css" href="style/style.less">
+
+    <script type="importmap" nonce="totallysecurenonce">
+    {
+      "imports": {
+        "vue": "./node_modules/vue/dist/vue.esm-browser.prod.js"
+      }
+    }
+    </script>
     <script src="lib/less.js"></script>
   </head>
   <body>
@@ -116,6 +124,6 @@
 
       <bfc-alert ref="alert"></bfc-alert>
     </div>
-    <script type="module" src="src/renderer/app.mjs"></script>
+    <script type="module" src="dist/renderer/app.mjs"></script>
   </body>
 </html>

@@ -1,5 +1,7 @@
-export default {
-  data: function(){
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  data: function() {
     return {
       content: ''
     }
@@ -11,7 +13,7 @@ export default {
   methods: {
     // data: (Buffer) output from child process
     // end: (bool) message from terminated process
-    push: function(data, end = false){
+    push: function(data: string|Buffer, end = false){
       if (typeof data !== 'string')
         data = data.toString('utf8')
 
@@ -32,4 +34,4 @@ export default {
   template: `
     <textarea readonly class="bfc-log log">{{content}}</textarea>
   `
-}
+})

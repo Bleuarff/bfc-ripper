@@ -5,8 +5,7 @@
   "main": "dist/main.mjs",
   "scripts": {
     "start": "tsc && electron .",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Bleuarff",
   "license": "MIT",

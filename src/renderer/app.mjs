@@ -3,7 +3,7 @@ import bfcStatus from './bfc-status.mjs'
 import bfcAlert from './bfc-alert.mjs'
 import bfcLog from './bfc-log.mjs'
 import { normalize, parseTime, getCDFingerprint } from './utils.mjs'
-import {createApp} from '../../lib/vue.esm-browser.prod.js'
+import { createApp } from 'vue'
 
 class ValidationError extends Error {
   constructor(fields){

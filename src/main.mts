@@ -24,7 +24,7 @@ function createWindow () {
       contextIsolation: true,
       preload: path.join(import.meta.dirname, 'preload.cjs')
     },
-    icon: path.join(import.meta.dirname, 'img/logo-512.png'),
+    icon: path.join(import.meta.dirname, '../img/logo-512.png'),
   })
 
   // and load the index.html of the app.

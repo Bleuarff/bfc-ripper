@@ -3,7 +3,7 @@
         "module": "esnext",
         "outDir": "dist/",
         "rootDir": "src/",
-        "allowJs": false
+        "allowJs": true
     },
      "include": [
         "src/"
