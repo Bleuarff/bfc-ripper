@@ -7,7 +7,7 @@ import { createApp, defineComponent } from 'vue'
 import { BfcIpc } from '../types/bfcIpc.mjs'
 
 declare global {
-  interface Window { bfc: BfcIpc}
+  let bfc: BfcIpc
 }
 
 class ValidationError extends Error {
@@ -67,11 +67,11 @@ const appDef = defineComponent({
     // check drive state regularly to look for new CDs
     setInterval(this.watchDrive, 5000)
 
-    window.bfc.onFlacData((_: any, data: Buffer|string) => this.logFlac.push(data))
-    window.bfc.onFlacClose((id: number, code: number) => this.flacComplete(id, code))
+    bfc.onFlacData((_: any, data: Buffer|string) => this.logFlac.push(data))
+    bfc.onFlacClose((id: number, code: number) => this.flacComplete(id, code))
 
-    window.bfc.onLameData((_: any, data: Buffer|string) =>  this.logLame.push(data))
-    window.bfc.onLameClose((id: number, code: number) => this.lameComplete(id, code))
+    bfc.onLameData((_: any, data: Buffer|string) =>  this.logLame.push(data))
+    bfc.onLameClose((id: number, code: number) => this.lameComplete(id, code))
 
   },
   watch: {
@@ -95,10 +95,10 @@ const appDef = defineComponent({
       return normalize(`${this.albumArtist} - ${this.albumTitle}${year}`)
     },
     flacOutputDir: async function(): Promise<string> {
-      return window.bfc.resolve(this.config.flacBasePath, this.folderName)
+      return bfc.resolve(this.config.flacBasePath, this.folderName)
     },
     mp3OutputDir: async function(): Promise<string> {
-      return window.bfc.resolve(this.config.mp3BasePath, this.folderName)
+      return bfc.resolve(this.config.mp3BasePath, this.folderName)
     },
 
     /**
@@ -158,17 +158,17 @@ const appDef = defineComponent({
         return
       }
 
-      this.tmpdir = await window.bfc.getTmpDir()
+      this.tmpdir = await bfc.getTmpDir()
 
       try{
         // create temp directories for wav, and target directories for flac & mp3
-        const ps = [ window.bfc.mkdir(this.tmpdir) ]
+        const ps = [ bfc.mkdir(this.tmpdir) ]
 
         if (this.opts.encodeFlac)
-          ps.push(window.bfc.mkdir(await this.flacOutputDir))
+          ps.push(bfc.mkdir(await this.flacOutputDir))
 
         if (this.opts.encodeMp3)
-          ps.push(window.bfc.mkdir(await this.mp3OutputDir))
+          ps.push(bfc.mkdir(await this.mp3OutputDir))
 
         await Promise.all(ps)
       }
@@ -190,10 +190,10 @@ const appDef = defineComponent({
       console.log('cdparanoia ' + args.join(' '))
       const start = Date.now()
 
-      const id = await window.bfc.spawnRip(args)
+      const id = await bfc.spawnRip(args)
 
       // cdparanoia outputs everything on stderr, no need to listen to stdout
-      const offStderr = window.bfc.onStderr(id, (data: Buffer|string) => {
+      const offStderr = bfc.onStderr(id, (data: Buffer|string) => {
         if (typeof data !== 'string')
           data = data.toString()
 
@@ -243,11 +243,11 @@ const appDef = defineComponent({
         }
       })
 
-      window.bfc.onError(id, (msg: string) => {
+      bfc.onError(id, (msg: string) => {
         console.error('ERROR', msg)
       })
 
-      window.bfc.onClose(id, (code: number) => {
+      bfc.onClose(id, (code: number) => {
         this.logParanoia.push(`cdparanoia exited with code ${code}`)
         this.logParanoia.push(`\nRip time: ${parseTime(Date.now() - start)}`)
       })
@@ -280,8 +280,8 @@ const appDef = defineComponent({
       if (!track) throw new Error('Track object is null')
 
       track.status.flac = IN_PROGRESS
-      const inputFile = await window.bfc.resolve(this.tmpdir, track.sourcename),
-            outputFile = await window.bfc.resolve(await this.flacOutputDir, `${track.filename}.flac`)
+      const inputFile = await bfc.resolve(this.tmpdir, track.sourcename),
+            outputFile = await bfc.resolve(await this.flacOutputDir, `${track.filename}.flac`)
 
       const cmdParams = {
         artist: track.artist,
@@ -298,7 +298,7 @@ const appDef = defineComponent({
 
       this.logFlac.push(`${inputFile}\n→ ${outputFile}`)
 
-      track.flacProcId = await window.bfc.spawnFlac(cmdParams)
+      track.flacProcId = await bfc.spawnFlac(cmdParams)
     },
 
     flacComplete: function(id: number, code: number) {
@@ -339,8 +339,8 @@ const appDef = defineComponent({
       if (!track) throw new Error('Track object is null')
 
       track.status.mp3 = IN_PROGRESS
-      const inputFile = await window.bfc.resolve(this.tmpdir, track.sourcename),
-            outputFile = await window.bfc.resolve(await this.mp3OutputDir, `${track.filename}.mp3`)
+      const inputFile = await bfc.resolve(this.tmpdir, track.sourcename),
+            outputFile = await bfc.resolve(await this.mp3OutputDir, `${track.filename}.mp3`)
 
       const cmdParams = {
         title: track.title,
@@ -357,7 +357,7 @@ const appDef = defineComponent({
 
       this.logLame.push(`${inputFile}\n→ ${outputFile}`)
 
-      track.lameProcId = await window.bfc.spawnLame(cmdParams)
+      track.lameProcId = await bfc.spawnLame(cmdParams)
     },
 
     lameComplete: function(id: number, code: number) {
@@ -389,7 +389,7 @@ const appDef = defineComponent({
     // cancel rip. kill child proc.
     // No need to kill encoding processes, they're quick enough.
     cancel: async function(isError = false){
-      await window.bfc.killRip()
+      await bfc.killRip()
       
       this.ripping = false
       const msg = isError == true ? '*** RIP ERROR ***' : '*** CANCEL RIP ***'
@@ -404,7 +404,7 @@ const appDef = defineComponent({
       if (!this.tmpdir) return
 
       try {
-        await window.bfc.rmTmp()
+        await bfc.rmTmp()
       }
       catch(ex) {
         console.error(`Error deleting temp folder ${this.tmpdir}`, ex)
@@ -415,7 +415,7 @@ const appDef = defineComponent({
     // tracks: array of Tracks with basic info,
     // runtime: (string) total cd runtime
     getTOC: async function(): Promise<{tracks: Track[], runtime: string}> {
-      const { stderr } = await window.bfc.getTOC()
+      const { stderr } = await bfc.getTOC()
       const tracks = []
       // parse response array to get track number, length and start
       const rx = /(?<tn>\d+)\.\s*\d+\s*\[(?<length>[\d:\.]+)\]\s*\d+\s*\[(?<start>[\d:\.]+)\]/ig
@@ -480,7 +480,7 @@ const appDef = defineComponent({
     //   target.trackCount = this.tracks.length
     //   // this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
 
-    //   await window.bfc.mkdir(await this.flacOutputDir),
+    //   await bfc.mkdir(await this.flacOutputDir),
     //   this.encodeFLAC(target)
     // },
 
@@ -505,7 +505,7 @@ const appDef = defineComponent({
         return
 
       const file = currentTarget.files[0]
-      this.imagePath = await window.bfc.getPathForFile(file)
+      this.imagePath = await bfc.getPathForFile(file)
       this.imageUrl = URL.createObjectURL(file)
       this.imageSize = file.size / 1e3
     },
@@ -518,14 +518,14 @@ const appDef = defineComponent({
 
     // Checks if there's a cd in drive and changes state prop accordingly.
     watchDrive: async function(){
-      const { stdout } = await window.bfc.setCD()
+      const { stdout } = await bfc.setCD()
 
       this.drivePresent = stdout.includes('Disc found in drive')
       return
     },
 
     openDirDialog: async function(type: ProcessType){
-      const dirPath = await window.bfc.getDirectory()
+      const dirPath = await bfc.getDirectory()
 
       if (dirPath)
         this.setOutputDir(dirPath, type)
