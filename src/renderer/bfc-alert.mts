@@ -1,9 +1,12 @@
+import { type ModalOptions } from "../types/modalOptions.mjs"
+import { defineComponent } from "vue"
+
 // Simple alert modal
-export default {
+export default defineComponent({
     data: function(){
         return {
             // input arg is split on line breaks
-            message: [],
+            message: [] as string[],
 
             visible: false,
             
@@ -15,7 +18,7 @@ export default {
         }
     },
     methods: {
-        show: function(msg, opts = {}){
+        show: function(msg: string, opts: ModalOptions = {}){
             this.message = msg.split('\n')    
             this.title = !!opts.title
             this.list = !!opts.list
@@ -34,4 +37,4 @@ export default {
         </div>
     </div>
     `
-}
+})

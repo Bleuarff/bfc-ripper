@@ -1,13 +1,14 @@
 import { IN_PROGRESS } from "./track.mjs"
+import { defineComponent } from "vue"
 
-export default {
+export default defineComponent({
   props: {
     status: {type: Number, required: true},
     ripping: {type: Boolean, required: true} // whether global ripping process is running
   },
   computed: {
     // return class value based on status
-    statusClass: function(){
+    statusClass: function(): string {
       let val = ''
       switch (this.status){
         case -1:
@@ -31,4 +32,4 @@ export default {
     <span class="bg" :class="[statusClass, {ripping: ripping}]"></span>
   </div>
   `
-}
+})

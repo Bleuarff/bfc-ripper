@@ -102,6 +102,8 @@ const defaultDiacriticsRemovalMap = [
 ]
 
 class Undiacritics {
+  diacriticsMap: Record<string, string>
+
   constructor(){
     this.diacriticsMap = {}
     for (let i = 0; i < defaultDiacriticsRemovalMap.length; i++){
@@ -113,7 +115,7 @@ class Undiacritics {
   }
 
   // "what?" version ... http://jsperf.com/diacritics/12
-  removeAll(str){
+  removeAll(str: string): string {
     return str.replace(/[^\u0000-\u007E]/g, a => {
       return this.diacriticsMap[a] || a
     })

@@ -2,8 +2,29 @@ import { normalize } from "./utils.mjs"
  
 export const IN_PROGRESS = 2222
 
+interface StatusGroup {
+  rip: number
+  flac: number
+  mp3: number
+}
+
 export class Track{
-  constructor(data, singleTrack = false){
+  id: string
+  start: string
+  length: string
+  artist: string
+  title: string
+  albumTitle: string
+  year: string
+  genre: string
+  _discNumber: string
+  trackCount: number
+  singleTrack: boolean
+  status: StatusGroup
+  flacProcId: number
+  lameProcId: number
+
+  constructor(data: Record<string, any>, singleTrack = false){
     this.id = data.id
     this.start = data.start
     this.length = data.length
@@ -39,25 +60,25 @@ export class Track{
     return normalize(name)
   }
 
-  get sourcename(){
+  get sourcename(): string {
     let prefix = ''
     if (!this.singleTrack)
       prefix = `track${this.id.toString().padStart(2, '0')}.`
     return `${prefix}cdda.wav`
   }
 
-  get pos(){
+  get pos(): string {
     return `${this.id.toString().padStart(2, '0')}/${this.trackCount.toString().padStart(2, '0')}`
   }
 
-  get success(){
+  get success(): boolean {
     return this.status.flac == 0 && this.status.mp3 == 0
   }
 
-  get discNumber(){
+  get discNumber(): string {
     return this._discNumber
   }
-  set discNumber(val){
+  set discNumber(val) {
     this._discNumber = val.padStart(2, '0')
   }
 }

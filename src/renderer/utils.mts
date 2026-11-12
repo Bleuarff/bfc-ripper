@@ -1,7 +1,8 @@
 import { undiacritics } from "./undiacritics.mjs"
+import { type Track } from './track.mjs'
 
 // converts a duration in ms into a string with minutes and seconds
-export function parseTime(val){
+export function parseTime(val: number): string {
   val /= 1000 // convert to seconds
   const min = Math.floor(val / 60),
         sec = Math.floor(val - min*60).toString().padStart(2, '0')
@@ -9,7 +10,7 @@ export function parseTime(val){
 }
 
 // remove accented and common special chars
-export function normalize(input){
+export function normalize(input: string): string {
   // https://en.wikipedia.org/wiki/Unicode_equivalence#Normalization
   // http://www.unicode.org/reports/tr15/
 
@@ -24,8 +25,8 @@ export function normalize(input){
 
 
 // returns unique CD identifier based on content
-export async function getCDFingerprint(tracks) {
-  const hash = tracks?.map((trk, i) => `${i.toString()}_${trk.start}_${trk.length}`)
+export async function getCDFingerprint(tracks: Track[]): Promise<string|null> {
+  const hash = tracks?.map((trk: any, i: number) => `${i.toString()}_${trk.start}_${trk.length}`)
     .join('/')
 
   return hash || null
