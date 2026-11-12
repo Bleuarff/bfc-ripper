@@ -1,0 +1,1 @@
+export type BfcIpc = Record<string, Function>

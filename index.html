@@ -59,7 +59,7 @@
             <img :src="imageUrl">
           </div>
           <input id="fileInput" type="file" accept="image/jpeg, image/png" v-on:change="selectImage" :disabled="ripping"/>
-          <span v-show="imageSize" id="imageSize">{{imageSize}}kB</span>
+          <span v-show="imageSize" id="imageSize">{{imageSize.toFixed(1)}}kB</span>
         </div>
       </div>
 

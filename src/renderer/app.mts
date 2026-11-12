@@ -1,26 +1,35 @@
 import { IN_PROGRESS, Track } from './track.mjs'
-import bfcStatus from './bfc-status.mjs'
-import bfcAlert from './bfc-alert.mjs'
-import bfcLog from './bfc-log.mjs'
+import BfcStatus from './bfc-status.mjs'
+import BfcAlert from './bfc-alert.mjs'
+import BfcLog from './bfc-log.mjs'
 import { normalize, parseTime, getCDFingerprint } from './utils.mjs'
-import { createApp } from 'vue'
+import { createApp, defineComponent } from 'vue'
+import { BfcIpc } from '../types/bfcIpc.mjs'
+
+declare global {
+  interface Window { bfc: BfcIpc}
+}
 
 class ValidationError extends Error {
-  constructor(fields){
+  fields: string[]
+
+  constructor(fields: string[]){
     super()
     this.message = 'Missing fields'
     this.fields = fields
   }
 }
 
-const appDef = {
+type ProcessType = 'flac'|'mp3'
+
+const appDef = defineComponent({
   data: function(){
     return {
       albumArtist: '',
       albumTitle: '',
       releaseYear: '',
       genre: '',
-      tracks: [],
+      tracks: [] as Track[],
       imagePath: '', // cover image filepath
       imageUrl: '', // data url
       imageSize: 0,
@@ -43,8 +52,13 @@ const appDef = {
         stopOnError: true
       },
 
-      history: [], // hash list
+      history: [] as string[], // list of cd fingerprints
     }
+  },
+  components: {
+    BfcAlert,
+    BfcLog,
+    BfcStatus,
   },
   mounted: async function(){
     await this.watchDrive()
@@ -53,15 +67,15 @@ const appDef = {
     // check drive state regularly to look for new CDs
     setInterval(this.watchDrive, 5000)
 
-    bfc.onFlacData((_, data) => this.$refs['log-flac'].push(data))
-    bfc.onFlacClose((id, code) => this.flacComplete(id, code))
+    window.bfc.onFlacData((_: any, data: Buffer|string) => this.logFlac.push(data))
+    window.bfc.onFlacClose((id: number, code: number) => this.flacComplete(id, code))
 
-    bfc.onLameData((_, data) =>  this.$refs['log-lame'].push(data))
-    bfc.onLameClose((id, code) => this.lameComplete(id, code))
+    window.bfc.onLameData((_: any, data: Buffer|string) =>  this.logLame.push(data))
+    window.bfc.onLameClose((id: number, code: number) => this.lameComplete(id, code))
 
   },
   watch: {
-    albumArtist: function(val){
+    albumArtist: function(val: string){
       // when album artist is edited, all tracks inherit it
       this.tracks.forEach(x => {x.artist = val})
     },
@@ -76,16 +90,34 @@ const appDef = {
     }
   },
   computed: {
-    folderName: function(){
+    folderName: function(): string {
       const year = this.releaseYear ? ` (${this.releaseYear})` : ''
       return normalize(`${this.albumArtist} - ${this.albumTitle}${year}`)
     },
-    flacOutputDir: async function(){
+    flacOutputDir: async function(): Promise<string> {
       return window.bfc.resolve(this.config.flacBasePath, this.folderName)
     },
-    mp3OutputDir: async function(){
+    mp3OutputDir: async function(): Promise<string> {
       return window.bfc.resolve(this.config.mp3BasePath, this.folderName)
-    }
+    },
+
+    /**
+     * component instances
+     **/ 
+  
+    alert(): InstanceType<typeof BfcAlert> {
+      return this.$refs.alert as InstanceType<typeof BfcAlert>
+    },
+    logParanoia(): InstanceType<typeof BfcLog> {
+      return this.$refs['log-paranoia'] as InstanceType<typeof BfcLog>
+    },
+    logFlac(): InstanceType<typeof BfcLog> {
+      return this.$refs['log-flac'] as InstanceType<typeof BfcLog>
+    },
+    logLame(): InstanceType<typeof BfcLog> {
+      return this.$refs['log-lame'] as InstanceType<typeof BfcLog>
+    },
+
   },
   methods: {
     // refresh TOC
@@ -93,8 +125,9 @@ const appDef = {
       const toc = await this.getTOC()
       this.tracks = toc.tracks
       this.runtime = toc.runtime
-      ;['paranoia', 'flac', 'lame'].forEach(x => this.$refs['log-' + x].clear()) // clear all logs
-    
+      
+      this.clearAllLogs()
+  
       // if artist is set before the CD is loaded, the watcher does nothing.
       // So we set artist on all tracks when CD loads.
       // Only on first CD, if you insert a 2nd CD we don't want previous CD's artist to leak.
@@ -104,7 +137,7 @@ const appDef = {
 
     rip: async function(){
       if (!this.opts.encodeFlac && !this.opts.encodeMp3){
-        this.$refs.alert.show('Select at least one encoding option (FLAC or MP3).')
+        this.alert.show('Select at least one encoding option (FLAC or MP3).')
         return
       }
 
@@ -120,8 +153,8 @@ const appDef = {
       try{
         this.validate()
       }
-      catch(ex){
-        this.$refs.alert.show(`Missing field${ex.fields.length > 1 ? 's' : ''}:\n${ ex.fields.join('\n')}`, {title: true, list: true})
+      catch(ex: any){
+        this.alert.show(`Missing field${ex.fields.length > 1 ? 's' : ''}:\n${ ex.fields.join('\n')}`, {title: true, list: true})
         return
       }
 
@@ -129,25 +162,25 @@ const appDef = {
 
       try{
         // create temp directories for wav, and target directories for flac & mp3
-        const ps = [ bfc.mkdir(this.tmpdir) ]
+        const ps = [ window.bfc.mkdir(this.tmpdir) ]
 
-        if (this.encodeFLAC)
-          ps.push(bfc.mkdir(await this.flacOutputDir))
+        if (this.opts.encodeFlac)
+          ps.push(window.bfc.mkdir(await this.flacOutputDir))
 
-        if (this.encodeMP3)
-          ps.push(bfc.mkdir(await this.mp3OutputDir))
+        if (this.opts.encodeMp3)
+          ps.push(window.bfc.mkdir(await this.mp3OutputDir))
 
         await Promise.all(ps)
       }
       catch(ex){
         console.error(ex)
-        this.$refs.alert.show('Error creating output directories')
+        this.alert.show('Error creating output directories')
         return
       }
 
       /* Start ripping process */
       this.ripping = true
-      ;['paranoia', 'flac', 'lame'].forEach(x => this.$refs['log-' + x].clear()) // clear all logs
+      this.clearAllLogs()
 
       const args = [ // cdparanoia arguments
         '--output-wav',
@@ -157,21 +190,22 @@ const appDef = {
       console.log('cdparanoia ' + args.join(' '))
       const start = Date.now()
 
-      const id = await bfc.spawnRip(args)
+      const id = await window.bfc.spawnRip(args)
 
       // cdparanoia outputs everything on stderr, no need to listen to stdout
-      const offStderr = bfc.onStderr(id, data => {
+      const offStderr = window.bfc.onStderr(id, (data: Buffer|string) => {
         if (typeof data !== 'string')
           data = data.toString()
 
-        this.$refs['log-paranoia'].push(data)
+        this.logParanoia.push(data)
 
-        let track
+        let track: Track|undefined
 
         // detect a track is done when cdparanoia announces it starts a new track...
         const match = /outputting to (?<nst>track(?<tn>\d+)\.)?cdda\.wav/.exec(data)
-        if (match){
-          const newTrackId = parseInt(match.groups.tn, 10), // get id of track being encoded
+        if (match) {
+          const tnCapture = match.groups?.tn ?? ''
+          const newTrackId: number = parseInt(tnCapture, 10), // get id of track being encoded
                 prevTrackId = newTrackId - 1 // and previous track id
 
           if (newTrackId > 0){
@@ -209,19 +243,20 @@ const appDef = {
         }
       })
 
-      bfc.onError(id, msg => {
+      window.bfc.onError(id, (msg: string) => {
         console.error('ERROR', msg)
       })
 
-      bfc.onClose(id, code => {
-        this.$refs['log-paranoia'].push(`cdparanoia exited with code ${code}`)
-        this.$refs['log-paranoia'].push(`\nRip time: ${parseTime(Date.now() - start)}`)
+      window.bfc.onClose(id, (code: number) => {
+        this.logParanoia.push(`cdparanoia exited with code ${code}`)
+        this.logParanoia.push(`\nRip time: ${parseTime(Date.now() - start)}`)
       })
     },
 
     // checks metadata are there
-    validate: function(){
-      const mandatory = ['artist', 'albumTitle']
+    validate: function(): void {
+      type trackFieldName = 'artist'|'albumTitle'|'title'
+      const mandatory = ['artist', 'albumTitle'] as trackFieldName[]
 
       if (!this.opts.singleTrack) // title field is mandatory if not ripping as single track
         mandatory.push('title')
@@ -229,7 +264,7 @@ const appDef = {
       const missing = []
 
       mandatory.forEach(field => {
-        if (this.tracks.some(t => !t[field]))
+        if (this.tracks.some(t => !t[field] ))
           missing.push(field)
       })
 
@@ -241,7 +276,7 @@ const appDef = {
       }
     },
 
-    encodeFLAC: async function(track){
+    encodeFLAC: async function(track: Track){
       if (!track) throw new Error('Track object is null')
 
       track.status.flac = IN_PROGRESS
@@ -261,19 +296,19 @@ const appDef = {
         inputFile,
       }
 
-      this.$refs['log-flac'].push(`${inputFile}\n→ ${outputFile}`)
+      this.logFlac.push(`${inputFile}\n→ ${outputFile}`)
 
-      track.flacProcId = await bfc.spawnFlac(cmdParams)
+      track.flacProcId = await window.bfc.spawnFlac(cmdParams)
     },
 
-    flacComplete: function(id, code) {
+    flacComplete: function(id: number, code: number) {
       const track = this.tracks.find(t => t.flacProcId === id)
 
       if (!track)
         throw new Error(`Cannot find track for FLAC process id. [id=${id}]`)
 
       track.status.flac = code
-      this.$refs['log-flac'].push(`flac exited with code ${code}.`, true)
+      this.logFlac.push(`flac exited with code ${code}.`, true)
 
       if (code != 0 && this.opts.stopOnError){ // stop everything
         this.cancel(true)
@@ -296,16 +331,16 @@ const appDef = {
         }
         const summary = trackList.map(t => `track ${t.id} done with exit code ${t.status.flac}`).join('\n')
         const final = trackList.every(t => t.status.flac == 0) ? '\nSuccess, all tracks OK\n' : ''
-        this.$refs['log-flac'].push('***********************\n' + summary + final, true)
+        this.logFlac.push('***********************\n' + summary + final, true)
       }
     },
 
-    encodeMP3: async function(track){
+    encodeMP3: async function(track: Track){
       if (!track) throw new Error('Track object is null')
 
       track.status.mp3 = IN_PROGRESS
-      const inputFile = await bfc.resolve(this.tmpdir, track.sourcename),
-            outputFile = await bfc.resolve(await this.mp3OutputDir, `${track.filename}.mp3`)
+      const inputFile = await window.bfc.resolve(this.tmpdir, track.sourcename),
+            outputFile = await window.bfc.resolve(await this.mp3OutputDir, `${track.filename}.mp3`)
 
       const cmdParams = {
         title: track.title,
@@ -320,19 +355,19 @@ const appDef = {
         outputFile,
       }
 
-      this.$refs['log-lame'].push(`${inputFile}\n→ ${outputFile}`)
+      this.logLame.push(`${inputFile}\n→ ${outputFile}`)
 
-      track.lameProcId = await bfc.spawnLame(cmdParams)
+      track.lameProcId = await window.bfc.spawnLame(cmdParams)
     },
 
-    lameComplete: function(id, code) {
+    lameComplete: function(id: number, code: number) {
       const track = this.tracks.find(t => t.lameProcId === id)
 
       if (!track)
         throw new Error(`Cannot find track for Lame process id. [id=${id}]`)
 
       track.status.mp3 = code
-      this.$refs['log-lame'].push(`lame exited with code ${code}.`, true)
+      this.logLame.push(`lame exited with code ${code}.`, true)
 
       if (code != 0 && this.opts.stopOnError){ // stop everything
         this.cancel(true)
@@ -346,7 +381,7 @@ const appDef = {
         this.ripping = false
         const summary = trackList.map(t => `track ${t.id} done with exit code ${t.status.mp3}`).join('\n')
         const final = trackList.every(t => t.status.mp3 == 0) ? '\nSuccess, all tracks OK\n' : ''
-        this.$refs['log-lame'].push('***********************\n' + summary + final, true)
+        this.logLame.push('***********************\n' + summary + final, true)
         this.clearTemp()
       }
     },
@@ -354,13 +389,13 @@ const appDef = {
     // cancel rip. kill child proc.
     // No need to kill encoding processes, they're quick enough.
     cancel: async function(isError = false){
-      await bfc.killRip()
+      await window.bfc.killRip()
       
       this.ripping = false
       const msg = isError == true ? '*** RIP ERROR ***' : '*** CANCEL RIP ***'
-      this.$refs['log-lame'].push(msg)
-      this.$refs['log-flac'].push(msg)
-      this.$refs['log-paranoia'].push(msg)
+      this.logLame.push(msg)
+      this.logFlac.push(msg)
+      this.logParanoia.push(msg)
       this.clearTemp()
     },
 
@@ -369,28 +404,28 @@ const appDef = {
       if (!this.tmpdir) return
 
       try {
-        await bfc.rmTmp()
+        await window.bfc.rmTmp()
       }
       catch(ex) {
-        console.error(`Error deleting temp folder ${this.tmpdir}`, err)
+        console.error(`Error deleting temp folder ${this.tmpdir}`, ex)
       }
     },
 
     // returns object with 2 properties:
     // tracks: array of Tracks with basic info,
     // runtime: (string) total cd runtime
-    getTOC: async function(){
-      const { stderr } = await bfc.getTOC()
+    getTOC: async function(): Promise<{tracks: Track[], runtime: string}> {
+      const { stderr } = await window.bfc.getTOC()
       const tracks = []
       // parse response array to get track number, length and start
       const rx = /(?<tn>\d+)\.\s*\d+\s*\[(?<length>[\d:\.]+)\]\s*\d+\s*\[(?<start>[\d:\.]+)\]/ig
 
       let match
-      while(match = rx.exec(stderr)){
+      while(match = rx.exec(stderr)) {
         tracks.push(new Track({
-          id: parseInt(match.groups.tn, 10),
-          start: match.groups.start,
-          length: match.groups.length
+          id: parseInt(match.groups?.tn as string, 10),
+          start: match.groups?.start,
+          length: match.groups?.length
         }))
       }
 
@@ -400,75 +435,79 @@ const appDef = {
 
       // get total cd runtime
       const rtm = /TOTAL\s*\d+\s*\[(?<rt>\d+:\d+\.\d+)\]/i.exec(stderr),
-            runtime = rtm ? rtm.groups.rt : ''
+            runtime = rtm?.groups?.rt || ''
+
       return { tracks: tracks, runtime: runtime }
     },
 
     // track edition: select next logical field upon certain keydown
-    moveFocus: function(e){
+    moveFocus: function(e: KeyboardEvent){
       let target
+      const currentTarget = e.currentTarget as HTMLElement|null
 
       if (e.key === 'ArrowUp'){// previous field of same type (artist or title)
-        const row = e.currentTarget.parentElement.parentElement.previousElementSibling
+        const row = currentTarget?.parentElement?.parentElement?.previousElementSibling
         if (row)
-          target = row.querySelector(`.${e.currentTarget.classList[0]}`)
+          target = row.querySelector(`.${currentTarget.classList[0]}`)
       }
       else if (e.key === 'ArrowDown'){// next field of same type
-        const row = e.currentTarget.parentElement.parentElement.nextElementSibling
+        const row = currentTarget?.parentElement?.parentElement?.nextElementSibling
         if (row)
-          target = row.querySelector(`.${e.currentTarget.classList[0]}`)
+          target = row.querySelector(`.${currentTarget.classList[0]}`)
       }
       else if (e.key === 'Enter'){// next logical field
-        const type = e.currentTarget.classList[0]
+        const type = currentTarget?.classList[0]
         if (type === 'trackArtist')
-          target = e.currentTarget.parentElement.parentElement.querySelector('.trackTitle')
+          target = currentTarget?.parentElement?.parentElement?.querySelector('.trackTitle')
         else if (type === 'trackTitle'){
-          const row = e.currentTarget.parentElement.parentElement.nextElementSibling
+          const row = currentTarget?.parentElement?.parentElement?.nextElementSibling
           if (row)
             target = row.querySelector('.trackTitle')
         }
       }
 
       if (target)
-        target.focus()
+        (target as HTMLElement).focus()
     },
 
-    testEncodeFlac: async function(){
-      const target = new Track({ id: '1' })
-      this.tmpdir = '/home/bleuarff/.config/bfc-ripper/rip-1569964527211'
-      this.albumArtist = target.artist = 'ufomammut'
-      this.albumTitle = target.albumTitle = '8'
-      this.genre = target.genre = ''
-      this.releaseYear = target.year = ''
-      target.trackCount = this.tracks.length
-      // this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
+    // testEncodeFlac: async function(){
+    //   const target = new Track({ id: '1' })
+    //   this.tmpdir = '/home/bleuarff/.config/bfc-ripper/rip-1569964527211'
+    //   this.albumArtist = target.artist = 'ufomammut'
+    //   this.albumTitle = target.albumTitle = '8'
+    //   this.genre = target.genre = ''
+    //   this.releaseYear = target.year = ''
+    //   target.trackCount = this.tracks.length
+    //   // this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
 
-      await bfc.mkdir(await this.flacOutputDir),
-      this.encodeFLAC(target)
-    },
+    //   await window.bfc.mkdir(await this.flacOutputDir),
+    //   this.encodeFLAC(target)
+    // },
 
-    testEncodeMp3: async function(){
-      const target = new Track({ id: '1' })
-      this.tmpdir = '/home/bleuarff/.config/bfc-ripper/rip-1569964527211'
-      this.albumArtist = target.artist = 'Ûfömammut'
-      this.albumTitle = target.albumTitle = '8'
-      this.genre = target.genre = ''
-      this.releaseYear = target.year = ''
-      target.trackCount = this.tracks.length
-      // this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
+    // testEncodeMp3: async function(){
+    //   const target = new Track({ id: '1' })
+    //   this.tmpdir = '/home/bleuarff/.config/bfc-ripper/rip-1569964527211'
+    //   this.albumArtist = target.artist = 'Ûfömammut'
+    //   this.albumTitle = target.albumTitle = '8'
+    //   this.genre = target.genre = ''
+    //   this.releaseYear = target.year = ''
+    //   target.trackCount = this.tracks.length
+    //   // this.imagePath = '/home/bleuarff/dev/bfc-ripper/ufomammut - 8.jpeg'
 
-      await bfc.mkdir(await this.mp3OutputDir)
-      this.encodeMP3(target)
-    },
+    //   await bfc.mkdir(await this.mp3OutputDir)
+    //   this.encodeMP3(target)
+    // },
 
-    selectImage: async function(e){
-      if (!e.currentTarget.files.length)
+    selectImage: async function(e: Event){
+      const currentTarget = e.currentTarget as HTMLInputElement
+
+      if (!currentTarget?.files?.length)
         return
 
-      const file = e.currentTarget.files[0]
+      const file = currentTarget.files[0]
       this.imagePath = await window.bfc.getPathForFile(file)
       this.imageUrl = URL.createObjectURL(file)
-      this.imageSize = (file.size / 1e3).toFixed(1)
+      this.imageSize = file.size / 1e3
     },
 
     loadConfig: async function(){
@@ -485,7 +524,7 @@ const appDef = {
       return
     },
 
-    openDirDialog: async function(type){
+    openDirDialog: async function(type: ProcessType){
       const dirPath = await window.bfc.getDirectory()
 
       if (dirPath)
@@ -493,7 +532,7 @@ const appDef = {
     },
 
     // sets flac or mp3 base directory & update localstorage config
-    setOutputDir: function(path, type){
+    setOutputDir: function(path: string, type: ProcessType){
       if (type === 'flac')
         this.config.flacBasePath = path
       else if (type ==='mp3')
@@ -501,12 +540,14 @@ const appDef = {
 
       localStorage.setItem('config', JSON.stringify(this.config))
     },
+
+    clearAllLogs: function(): void {
+      this.logParanoia.clear()
+      this.logFlac.clear()
+      this.logLame.clear()
+    }
   }
-}
+})
 
 const app = createApp(appDef)
-
-app.component('bfc-status', bfcStatus)
-app.component('bfc-alert', bfcAlert)
-app.component('bfc-log', bfcLog)
 app.mount('#app')

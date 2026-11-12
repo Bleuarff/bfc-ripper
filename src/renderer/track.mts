@@ -9,7 +9,7 @@ interface StatusGroup {
 }
 
 export class Track{
-  id: string
+  id: number
   start: string
   length: string
   artist: string
