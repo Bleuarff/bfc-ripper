@@ -4,10 +4,10 @@ import BfcAlert from './bfc-alert.mjs'
 import BfcLog from './bfc-log.mjs'
 import { normalize, parseTime, getCDFingerprint } from './utils.mjs'
 import { createApp, defineComponent } from 'vue'
-import { BfcIpc } from '../types/bfcIpc.mjs'
+import { BfcApi } from '../preload.cjs'
 
 declare global {
-  let bfc: BfcIpc
+  let bfc: BfcApi
 }
 
 class ValidationError extends Error {
@@ -187,9 +187,8 @@ const appDef = defineComponent({
         '--verbose',
         this.opts.singleTrack ? `"1-${this.tracks.length}"`: '--batch' // test mode: rip first track only
       ]
-      console.log('cdparanoia ' + args.join(' '))
-      const start = Date.now()
 
+      const start = Date.now()
       const id = await bfc.spawnRip(args)
 
       // cdparanoia outputs everything on stderr, no need to listen to stdout

@@ -19,12 +19,12 @@ function on2(canal: string, cb: Function) {
     return () => ipcRenderer.removeListener(canal, handler)
 }
 
-contextBridge.exposeInMainWorld('bfc', {
+const bfcApi = {
     setCD: () => ipcRenderer.invoke('set-cd'),
     getTOC: () => ipcRenderer.invoke('get-toc'),
     mkdir: (filepath: string) => ipcRenderer.invoke('mkdir', filepath),
     rmTmp: () => ipcRenderer.invoke('rm-tmp-dir'),
-    getPathForFile: (file: string) => webUtils.getPathForFile(file),
+    getPathForFile: (file: File) => webUtils.getPathForFile(file),
     getDirectory: () => ipcRenderer.invoke('getDir'),
     resolve: (...args: string[]) => ipcRenderer.invoke('resolve', ...args),
     getTmpDir: () => ipcRenderer.invoke('get-tmp-dir'),
@@ -43,4 +43,8 @@ contextBridge.exposeInMainWorld('bfc', {
     onStderr: (id: Number, cb: Function) => on('rip:stderr', id, cb),
     onError: (id: Number, cb: Function) => on('rip:error', id, cb),
     onClose: (id: Number, cb: Function) => on('rip:close', id, cb),
-})
+}
+
+contextBridge.exposeInMainWorld('bfc', bfcApi)
+
+export type BfcApi = typeof bfcApi
