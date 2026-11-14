@@ -15,7 +15,7 @@ export class Track{
   artist: string
   title: string
   albumTitle: string
-  year: string
+  year: number
   genre: string
   _discNumber: string
   trackCount: number
@@ -32,7 +32,7 @@ export class Track{
     this.artist = ''
     this.title = ''
     this.albumTitle = ''
-    this.year = ''
+    this.year = 0
     this.trackCount = 0
     this.genre = ''
     this._discNumber = '01'

@@ -10,13 +10,24 @@ declare global {
   let bfc: BfcApi
 }
 
-class ValidationError extends Error {
+class MissingFieldsError extends Error {
   fields: string[]
 
   constructor(fields: string[]){
     super()
     this.message = 'Missing fields'
     this.fields = fields
+  }
+}
+
+class InvalidValueError extends Error {
+  field: string
+  value: string
+
+  constructor(field: string, value: string) {
+    super()
+    this.field = field
+    this.value = value
   }
 }
 
@@ -27,7 +38,8 @@ const appDef = defineComponent({
     return {
       albumArtist: '',
       albumTitle: '',
-      releaseYear: '',
+      releaseYearInput: '',
+      releaseYear: 0,
       genre: '',
       tracks: [] as Track[],
       imagePath: '', // cover image filepath
@@ -77,7 +89,10 @@ const appDef = defineComponent({
   watch: {
     albumArtist: function(val: string){
       // when album artist is edited, all tracks inherit it
-      this.tracks.forEach(x => {x.artist = val})
+      this.tracks.forEach(x => {x.artist = val.trim()})
+    },
+    albumTitle: function(val: string) {
+      this.tracks.forEach(t => t.albumTitle = val.trim())
     },
     // drive state changes: refresh/clear tracklist
     drivePresent: function(val){
@@ -91,7 +106,7 @@ const appDef = defineComponent({
   },
   computed: {
     folderName: function(): string {
-      const year = this.releaseYear ? ` (${this.releaseYear})` : ''
+      const year = this.releaseYearInput ? ` (${this.releaseYearInput})` : ''
       return normalize(`${this.albumArtist} - ${this.albumTitle}${year}`)
     },
     flacOutputDir: async function(): Promise<string> {
@@ -128,11 +143,16 @@ const appDef = defineComponent({
       
       this.clearAllLogs()
   
-      // if artist is set before the CD is loaded, the watcher does nothing.
+      // if artist/album is set before the CD is loaded, the watcher does nothing.
       // So we set artist on all tracks when CD loads.
       // Only on first CD, if you insert a 2nd CD we don't want previous CD's artist to leak.
-      if (this.history.length === 1 && this.albumArtist)
-        this.tracks.forEach(t => t.artist = this.albumArtist)
+      if (this.history.length === 1){
+        if (this.albumArtist)
+          this.tracks.forEach(t => t.artist = this.albumArtist)
+
+        if (this.albumTitle)
+          this.tracks.forEach(t => t.albumTitle = this.albumTitle)
+      }
     },
 
     rip: async function(){
@@ -141,22 +161,26 @@ const appDef = defineComponent({
         return
       }
 
+      try{
+        this.validate()
+      }
+      catch(ex: any){
+
+        if (ex instanceof MissingFieldsError)
+          this.alert.show(`Missing field${ex.fields.length > 1 ? 's' : ''}:\n${ ex.fields.join('\n')}`, {title: true, list: true})
+        else if (ex instanceof InvalidValueError) {
+          this.alert.show(`Invalid release year value "${ex.value}"`)
+        }
+        return
+      }
+
       /* SETUP */
       this.tracks.forEach(t => {
-        t.albumTitle = this.albumTitle
         t.year = this.releaseYear
         t.trackCount = this.tracks.length
         t.genre = this.genre
         t.discNumber = this.discNumber
       })
-
-      try{
-        this.validate()
-      }
-      catch(ex: any){
-        this.alert.show(`Missing field${ex.fields.length > 1 ? 's' : ''}:\n${ ex.fields.join('\n')}`, {title: true, list: true})
-        return
-      }
 
       this.tmpdir = await bfc.getTmpDir()
 
@@ -271,7 +295,18 @@ const appDef = defineComponent({
         missing.push('output paths')
 
       if (missing.length > 0){
-        throw new ValidationError(missing)
+        throw new MissingFieldsError(missing)
+      }
+
+      if (this.releaseYearInput) {
+        const rx = /^\d{4}$/
+        const year = parseInt(this.releaseYearInput, 10)
+        const currentYear = Temporal.Now.plainDateISO().year
+
+        if (rx.test(this.releaseYearInput) && year > 1900 && year <= currentYear)
+          this.releaseYear = year
+        else
+          throw new InvalidValueError('year', this.releaseYearInput)
       }
     },
 

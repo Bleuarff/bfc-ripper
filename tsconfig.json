@@ -3,7 +3,8 @@
         "module": "esnext",
         "outDir": "dist/",
         "rootDir": "src/",
-        "allowJs": true
+        "allowJs": true,
+        "lib": ["DOM", "ESNext.Temporal"]
     },
      "include": [
         "src/"
