@@ -5,30 +5,10 @@ import BfcLog from './bfc-log.mjs'
 import { normalize, parseTime, getCDFingerprint } from './utils.mjs'
 import { createApp, defineComponent } from 'vue'
 import { BfcApi } from '../preload.cjs'
+import { MissingFieldsError, InvalidValueError } from './errors.mjs'
 
 declare global {
   let bfc: BfcApi
-}
-
-class MissingFieldsError extends Error {
-  fields: string[]
-
-  constructor(fields: string[]){
-    super()
-    this.message = 'Missing fields'
-    this.fields = fields
-  }
-}
-
-class InvalidValueError extends Error {
-  field: string
-  value: string
-
-  constructor(field: string, value: string) {
-    super()
-    this.field = field
-    this.value = value
-  }
 }
 
 type ProcessType = 'flac'|'mp3'
